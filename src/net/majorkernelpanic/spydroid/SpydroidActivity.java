@@ -39,7 +39,6 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -84,7 +83,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 
     static private RtspServer rtspServer = null;
 
-    private PowerManager.WakeLock wl;
     private SurfaceHolder holder;
     private SurfaceView camera;
     private TextView line1, line2, version, signWifi, signStreaming;
@@ -116,9 +114,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 
         camera.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder = camera.getHolder();
-
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "net.majorkernelpanic.spydroid.wakelock");
 
     	// Print version number
         try {
@@ -195,18 +190,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     			}
     		}
     	}
-    }
-
-    public void onStart() {
-    	super.onStart();
-    	// Lock screen
-    	wl.acquire();
-    }
-
-    public void onStop() {
-    	super.onStop();
-    	// A WakeLock should only be released when isHeld() is true !
-    	if (wl.isHeld()) wl.release();
     }
 
     public void onResume() {
