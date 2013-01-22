@@ -43,7 +43,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -91,7 +90,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     private SurfaceHolder holder;
     private SurfaceView camera;
     private TextView line1, line2, version, signWifi, signStreaming;
-    private ImageView buttonSettings, buttonClient, buttonAbout;
+    private ImageView buttonSettings, buttonAbout;
     private LinearLayout signInformation;
     private Context context;
     private Animation pulseAnimation;
@@ -107,7 +106,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         line2 = (TextView)findViewById(R.id.line2);
         version = (TextView)findViewById(R.id.version);
         buttonSettings = (ImageView)findViewById(R.id.button_settings);
-        //buttonClient = (ImageView)findViewById(R.id.button_client);
         buttonAbout = (ImageView)findViewById(R.id.button_about);
         signWifi = (TextView)findViewById(R.id.advice);
         signStreaming = (TextView)findViewById(R.id.streaming);
@@ -159,20 +157,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 			public void onClick(View v) {
 	            // Starts QualityListActivity where user can change the quality of the stream
 				Intent intent = new Intent(context,OptionsActivity.class);
-	            startActivityForResult(intent, 0);
-			}
-		});
-        /*buttonClient.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				// Starts ClientActivity, the user can then capture the stream from another phone running Spydroid
-	            Intent intent = new Intent(context,ClientActivity.class);
-	            startActivityForResult(intent, 0);
-			}
-		});*/
-        buttonAbout.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-	            // Display some information
-	            Intent intent = new Intent(context,AboutActivity.class);
 	            startActivityForResult(intent, 0);
 			}
 		});
@@ -233,16 +217,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     	if (notificationEnabled) {
     		Intent notificationIntent = new Intent(this, SpydroidActivity.class);
     		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-    		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-    		Notification notification = builder.setContentIntent(pendingIntent)
-    				.setWhen(System.currentTimeMillis())
-    				.setTicker(getText(R.string.notification_title))
-    				.setSmallIcon(R.drawable.icon)
-    				.setContentTitle(getText(R.string.notification_title))
-    				.setContentText(getText(R.string.notification_content)).build();
-    		notification.flags |= Notification.FLAG_ONGOING_EVENT;
-    		((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).notify(0,notification);
     	}
 
     }
@@ -290,11 +264,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     	Intent intent;
 
         switch (item.getItemId()) {
-        /*case R.id.client:
-            // Starts ClientActivity where user can view stream from another phone
-            intent = new Intent(this.getBaseContext(),ClientActivity.class);
-            startActivityForResult(intent, 0);
-            return true;*/
         case R.id.options:
             // Starts QualityListActivity where user can change the streaming quality
             intent = new Intent(this.getBaseContext(),OptionsActivity.class);
