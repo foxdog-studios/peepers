@@ -53,7 +53,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * Spydroid launches an RtspServer, clients can then connect to it and receive audio/video streams from the phone
@@ -249,7 +248,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     		try {
     			rtspServer.start();
     		} catch (IOException e) {
-    			log("RtspServer could not be started : "+(e.getMessage()!=null?e.getMessage():"Unknown error"));
+    			Log.w(TAG, "RtspServer could not be started : "+(e.getMessage()!=null?e.getMessage():"Unknown error"));
     		}
     	}
     }
@@ -283,10 +282,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     		case RtspServer.MESSAGE_ERROR:
     			Exception e1 = (Exception)msg.obj;
     			lastCaughtException = e1;
-    			log(e1.getMessage()!=null?e1.getMessage():"An error occurred !");
-    			break;
-    		case RtspServer.MESSAGE_LOG:
-    			//log((String)msg.obj);
+    			Log.w(TAG, e1.getMessage()!=null?e1.getMessage():"An error occurred !");
     			break;
     		case Session.MESSAGE_START:
     			streaming = true;
@@ -319,10 +315,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     		line2.setText("RTSP://xxx.xxx.xxx.xxx:"+defaultRtspPort);
     		streamingState(2);
     	}
-    }
-
-    public void log(String s) {
-    	Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
     }
 
 	private void streamingState(int state) {
