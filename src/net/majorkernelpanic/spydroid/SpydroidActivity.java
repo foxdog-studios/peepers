@@ -9,7 +9,6 @@ import net.majorkernelpanic.streaming.video.VideoStream;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -50,11 +49,6 @@ public class SpydroidActivity extends Activity
 
     private SurfaceHolder holder;
     private SurfaceView camera;
-    private TextView line1, line2, signWifi, signStreaming;
-    private ImageView buttonSettings, buttonAbout;
-    private LinearLayout signInformation;
-    private Context context;
-    private Animation pulseAnimation;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,15 +56,6 @@ public class SpydroidActivity extends Activity
         setContentView(R.layout.main);
 
         camera = (SurfaceView)findViewById(R.id.smallcameraview);
-        context = this.getApplicationContext();
-        line1 = (TextView)findViewById(R.id.line1);
-        line2 = (TextView)findViewById(R.id.line2);
-        buttonSettings = (ImageView)findViewById(R.id.button_settings);
-        buttonAbout = (ImageView)findViewById(R.id.button_about);
-        signWifi = (TextView)findViewById(R.id.advice);
-        signStreaming = (TextView)findViewById(R.id.streaming);
-        signInformation = (LinearLayout)findViewById(R.id.information);
-        pulseAnimation = AnimationUtils.loadAnimation(this, R.anim.pulse);
 
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -96,14 +81,6 @@ public class SpydroidActivity extends Activity
         if (rtspServer == null) {
             rtspServer = new RtspServer(8086);
         } // if
-
-        buttonSettings.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                // Starts QualityListActivity where user can change the quality of the stream
-                Intent intent = new Intent(context,OptionsActivity.class);
-                startActivityForResult(intent, 0);
-            }
-        });
     }
 
     public void onResume() {
