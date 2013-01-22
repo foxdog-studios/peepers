@@ -3,7 +3,8 @@
 set -o errexit
 set -o nounset
 
-sudo yaourt --needed --noconfirm -Sy \
+yaourt --needed --noconfirm -Sy \
+        android-ndk \
         android-sdk \
         android-sdk-platform-tools
 
