@@ -9,19 +9,18 @@ import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.media.MediaRecorder;
 import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
 
 public final class VideoStream extends MediaStream {
-    protected final static String TAG = "VideoStream";
+    private static final String TAG = "VideoStream";
 
-    protected VideoQuality quality = VideoQuality.defaultVideoQualiy.clone();
-    protected SurfaceHolder.Callback surfaceHolderCallback = null;
-    protected Surface surface = null;
-    protected boolean flashState = false,  qualityHasChanged = false;
-    protected int videoEncoder, cameraId = 0;
-    protected Camera camera;
+    private VideoQuality quality = VideoQuality.defaultVideoQualiy.clone();
+    private SurfaceHolder.Callback surfaceHolderCallback = null;
+    private boolean qualityHasChanged = false;
+    private int videoEncoder;
+    private int cameraId;
+    private Camera camera;
 
     /**
      * Don't use this class directly
@@ -41,19 +40,6 @@ public final class VideoStream extends MediaStream {
                 break;
             }
         }
-    }
-
-    /**
-     * Sets a Surface to show a preview of recorded media (video).
-     * You can call this method at any time and changes will take effect next time you call prepare()
-     */
-    public void setPreviewDisplay(Surface surface) {
-        this.surface = surface;
-    }
-
-    /** Turn flash on or off if phone has one */
-    public void setFlashState(boolean state) {
-        flashState = state;
     }
 
     /**
@@ -164,16 +150,6 @@ public final class VideoStream extends MediaStream {
 
         // If an exception is thrown after the camera was open, we must absolutly release it !
         try {
-
-            // We reconnect to camera to change flash state if needed
-            Parameters parameters = camera.getParameters();
-            if (parameters.getFlashMode()==null && flashState) {
-                // The phone has no flash
-                throw new IllegalStateException("Can't turn the flash on !");
-            } else {
-                parameters.setFlashMode(flashState?Parameters.FLASH_MODE_TORCH:Parameters.FLASH_MODE_OFF);
-                camera.setParameters(parameters);
-            }
             camera.setDisplayOrientation(quality.orientation);
             camera.unlock();
             super.setCamera(camera);
@@ -186,7 +162,6 @@ public final class VideoStream extends MediaStream {
             if (mode==MODE_DEFAULT) {
                 super.setMaxDuration(1000);
                 super.setMaxFileSize(Integer.MAX_VALUE);
-            } else if (modeDefaultWasUsed) {
                 // On some phones a RuntimeException might be thrown :/
                 try {
                     super.setMaxDuration(0);
@@ -196,7 +171,6 @@ public final class VideoStream extends MediaStream {
                 }
             }
 
-            super.setPreviewDisplay(surface);
             super.setVideoEncoder(videoEncoder);
             super.setVideoSize(quality.resX,quality.resY);
             super.setVideoFrameRate(quality.framerate);
@@ -204,16 +178,9 @@ public final class VideoStream extends MediaStream {
 
             super.prepare();
 
-            // Reset flash state to ensure that default behavior is to turn it off
-            flashState = false;
-
             // Quality has been updated
             qualityHasChanged = false;
 
-        } catch (RuntimeException e) {
-            camera.release();
-            camera = null;
-            throw e;
         } catch (IOException e) {
             camera.release();
             camera = null;

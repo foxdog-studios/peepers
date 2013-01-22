@@ -32,7 +32,6 @@ public class UriParser {
 	 * @throws IOException
 	 */
 	public static void parse(String uri, Session session) throws IllegalStateException, IOException {
-		boolean flash = false;
 		int camera = CameraInfo.CAMERA_FACING_BACK;
 
 		List<NameValuePair> params = URLEncodedUtils.parse(URI.create(uri),"UTF-8");
@@ -42,14 +41,8 @@ public class UriParser {
 			for (Iterator<NameValuePair> it = params.iterator();it.hasNext();) {
 				NameValuePair param = it.next();
 
-				// FLASH ON/OFF
-				if (param.getName().equals("flash")) {
-					if (param.getValue().equals("on")) flash = true;
-					else flash = false;
-				}
-
 				// CAMERA -> the client can choose between the front facing camera and the back facing camera
-				else if (param.getName().equals("camera")) {
+				if (param.getName().equals("camera")) {
 					if (param.getValue().equals("back")) camera = CameraInfo.CAMERA_FACING_BACK;
 					else if (param.getValue().equals("front")) camera = CameraInfo.CAMERA_FACING_FRONT;
 				}
@@ -112,7 +105,7 @@ public class UriParser {
 				NameValuePair param = it.next();
 				if (param.getName().equals("h263")) {
 					VideoQuality quality = VideoQuality.parseQuality(param.getValue());
-					session.addVideoTrack(Session.VIDEO_H263, camera, quality, flash);
+					session.addVideoTrack(Session.VIDEO_H263, camera, quality);
 				}
 			}
 

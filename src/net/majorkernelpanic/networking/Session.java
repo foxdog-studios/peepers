@@ -111,22 +111,20 @@ public class Session {
 	}
 
 	/** Add the default video track with default configuration
-	 * @throws IllegalStateException
 	 * @throws IOException
 	 */
-	public void addVideoTrack() throws IllegalStateException, IOException {
-		addVideoTrack(defaultVideoEncoder,defaultCamera,defaultVideoQuality,false);
+	public void addVideoTrack() throws IOException
+    {
+		addVideoTrack(defaultVideoEncoder, defaultCamera, defaultVideoQuality);
 	}
 
 	/** Add video track with specified quality and encoder
 	 * @param encoder Can be either Session.VIDEO_H264 or Session.VIDEO_H263
 	 * @param camera Can be either CameraInfo.CAMERA_FACING_BACK or CameraInfo.CAMERA_FACING_FRONT
 	 * @param videoQuality Will determine the bitrate,framerate and resolution of the stream
-	 * @param flash Set it to true to turn the flash on, if the phone has no flash, an exception IllegalStateException will be thrown
-	 * @throws IllegalStateException
 	 * @throws IOException
 	 */
-	public void addVideoTrack(int encoder, int camera, VideoQuality videoQuality, boolean flash) throws IllegalStateException, IOException {
+	public void addVideoTrack(int encoder, int camera, VideoQuality videoQuality) throws IOException {
 		synchronized (LOCK) {
 			if (sessionUsingTheCamera != null) {
 				if (sessionUsingTheCamera.routingScheme==UNICAST) throw new IllegalStateException("Camera already in use by another client");
@@ -145,7 +143,6 @@ public class Session {
 				Log.d(TAG,"Quality is: "+videoQuality.resX+"x"+videoQuality.resY+"px "+videoQuality.framerate+"fps, "+videoQuality.bitrate+"bps");
 				((VideoStream) stream).setVideoQuality(videoQuality);
 				((VideoStream) stream).setPreviewDisplay(surfaceHolder.getSurface());
-				((VideoStream) stream).setFlashState(flash);
 				stream.setTimeToLive(defaultTimeToLive);
 				stream.setDestination(destination, 5006);
 				streamList[0] = stream;
