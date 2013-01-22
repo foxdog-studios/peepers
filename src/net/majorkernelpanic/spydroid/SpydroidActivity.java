@@ -1,23 +1,3 @@
-/*
- * Copyright (C) 2011 GUIGUI Simon, fyhertz@gmail.com
- *
- * This file is part of Spydroid (http://code.google.com/p/spydroid-ipcamera/)
- *
- * Spydroid is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This source code is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this source code; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package net.majorkernelpanic.spydroid;
 
 import java.io.IOException;
@@ -37,7 +17,6 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -137,13 +116,12 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
                 videoQuality);
 
         Session.setSurfaceHolder(holder);
-        Session.setHandler(handler);
         Session.setDefaultAudioEncoder(audioEncoder);
         Session.setDefaultVideoEncoder(videoEncoder);
         Session.setDefaultVideoQuality(videoQuality);
         H264Stream.setPreferences(settings);
 
-        if (rtspServer == null) rtspServer = new RtspServer(defaultRtspPort, handler);
+        if (rtspServer == null) rtspServer = new RtspServer(defaultRtspPort);
 
         buttonSettings.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
@@ -181,7 +159,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         }
         else if (key.equals("enable_rtsp")) {
             if (sharedPreferences.getBoolean("enable_rtsp", true)) {
-                if (rtspServer == null) rtspServer = new RtspServer(defaultRtspPort, handler);
+                if (rtspServer == null) rtspServer = new RtspServer(defaultRtspPort);
             } else {
                 if (rtspServer != null) {
                     rtspServer.stop();
@@ -273,29 +251,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     };
 
     private boolean streaming = false;
-
-    // The Handler that gets information back from the RtspServer and Session
-    private final Handler handler = new Handler() {
-
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-            case RtspServer.MESSAGE_ERROR:
-                Exception e1 = (Exception)msg.obj;
-                lastCaughtException = e1;
-                Log.w(TAG, e1.getMessage()!=null?e1.getMessage():"An error occurred !");
-                break;
-            case Session.MESSAGE_START:
-                streaming = true;
-                streamingState(1);
-                break;
-            case Session.MESSAGE_STOP:
-                streaming = false;
-                displayIpAddress();
-                break;
-            }
-        }
-
-    };
 
     private void displayIpAddress() {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
