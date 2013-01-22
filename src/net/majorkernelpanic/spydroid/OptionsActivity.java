@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2011-2012 GUIGUI Simon, fyhertz@gmail.com
- * 
+ *
  * This file is part of Spydroid (http://code.google.com/p/spydroid-ipcamera/)
- * 
+ *
  * Spydroid is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this source code; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -36,35 +36,31 @@ public class OptionsActivity extends PreferenceActivity {
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        
+
         addPreferencesFromResource(R.xml.preferences);
-        
+
         final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         final Preference videoEnabled = findPreference("stream_video");
-        final Preference audioEnabled = findPreference("stream_audio");
-        final ListPreference audioEncoder = (ListPreference) findPreference("audio_encoder");
         final ListPreference videoEncoder = (ListPreference) findPreference("video_encoder");
         final ListPreference videoResolution = (ListPreference) findPreference("video_resolution");
         final ListPreference videoBitrate = (ListPreference) findPreference("video_bitrate");
         final ListPreference videoFramerate = (ListPreference) findPreference("video_framerate");
-        
+
         boolean videoState = settings.getBoolean("stream_video", true);
         videoEncoder.setEnabled(videoState);
 		videoResolution.setEnabled(videoState);
 		videoBitrate.setEnabled(videoState);
-		videoFramerate.setEnabled(videoState);        
-		audioEncoder.setEnabled(settings.getBoolean("stream_audio", true));
-        
+		videoFramerate.setEnabled(videoState);
+
         videoEncoder.setValue(String.valueOf(SpydroidActivity.videoEncoder));
-        audioEncoder.setValue(String.valueOf(SpydroidActivity.audioEncoder));
         videoFramerate.setValue(String.valueOf(SpydroidActivity.videoQuality.framerate));
         videoBitrate.setValue(String.valueOf(SpydroidActivity.videoQuality.bitrate/1000));
         videoResolution.setValue(SpydroidActivity.videoQuality.resX+"x"+SpydroidActivity.videoQuality.resY);
-        
+
         videoResolution.setSummary(getString(R.string.settings0)+" "+videoResolution.getValue()+"px");
         videoFramerate.setSummary(getString(R.string.settings1)+" "+videoFramerate.getValue()+"fps");
         videoBitrate.setSummary(getString(R.string.settings2)+" "+videoBitrate.getValue()+"kbps");
-        
+
         videoResolution.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
         	public boolean onPreferenceChange(Preference preference, Object newValue) {
         		Editor editor = settings.edit();
@@ -78,7 +74,7 @@ public class OptionsActivity extends PreferenceActivity {
         		return true;
 			}
         });
-        
+
         videoFramerate.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
         	public boolean onPreferenceChange(Preference preference, Object newValue) {
         		videoFramerate.setSummary(getString(R.string.settings1)+" "+(String)newValue+"fps");
@@ -92,7 +88,7 @@ public class OptionsActivity extends PreferenceActivity {
         		return true;
 			}
         });
-        
+
         videoEnabled.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
         	public boolean onPreferenceChange(Preference preference, Object newValue) {
         		boolean state = (Boolean)newValue;
@@ -103,15 +99,6 @@ public class OptionsActivity extends PreferenceActivity {
         		return true;
 			}
         });
-        
-        audioEnabled.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-        	public boolean onPreferenceChange(Preference preference, Object newValue) {
-        		boolean state = (Boolean)newValue;
-        		audioEncoder.setEnabled(state);
-        		return true;
-			}
-        });
-        
     }
-    
+
 }

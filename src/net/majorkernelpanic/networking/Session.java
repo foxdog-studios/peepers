@@ -1,44 +1,15 @@
-/*
- * Copyright (C) 2011 GUIGUI Simon, fyhertz@gmail.com
- *
- * This file is part of Spydroid (http://code.google.com/p/spydroid-ipcamera/)
- *
- * Spydroid is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This source code is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this source code; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package net.majorkernelpanic.networking;
 
 import java.io.IOException;
 import java.net.InetAddress;
 
 import net.majorkernelpanic.streaming.Stream;
-import net.majorkernelpanic.streaming.audio.AACStream;
-import net.majorkernelpanic.streaming.audio.AMRNBStream;
-import net.majorkernelpanic.streaming.audio.GenericAudioStream;
 import net.majorkernelpanic.streaming.video.VideoQuality;
 import net.majorkernelpanic.streaming.video.VideoStream;
 import android.hardware.Camera.CameraInfo;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-/**
- * This class makes use of all the streaming package
- * It represents a streaming session between a client and the phone
- * A stream is designated by the word "track" in this class
- * To add tracks to the session you need to call addVideoTrack() or addAudioTrack()
- */
 public class Session {
 
 	public final static String TAG = "Session";
@@ -46,9 +17,6 @@ public class Session {
 	// Available encoders
 	public final static int VIDEO_H264 = 0x01;
 	public final static int VIDEO_H263 = 0x02;
-	public final static int AUDIO_AMRNB = 0x03;
-	public final static int AUDIO_ANDROID_AMR = 0x04;
-	public final static int AUDIO_AAC = 0x05; // Only for ICS /!\
 
 	// Available routing scheme
 	public final static int UNICAST = 0x01;
@@ -56,7 +24,7 @@ public class Session {
 
 	// Default configuration
 	private static VideoQuality defaultVideoQuality = VideoQuality.defaultVideoQualiy.clone();
-	private static int defaultVideoEncoder = VIDEO_H263, defaultAudioEncoder = AUDIO_AMRNB;
+	private static int defaultVideoEncoder = VIDEO_H263;
 	private static int defaultCamera = CameraInfo.CAMERA_FACING_BACK;
 
 	// Indicates if a session is already streaming audio or video
@@ -91,11 +59,6 @@ public class Session {
 	/** Set default video stream quality, it will be used by addVideoTrack */
 	public static void setDefaultVideoQuality(VideoQuality quality) {
 		defaultVideoQuality = quality;
-	}
-
-	/** Set the default audio encoder, it will be used by addAudioTrack */
-	public static void setDefaultAudioEncoder(int encoder) {
-		defaultAudioEncoder = encoder;
 	}
 
 	/** Set the default video encoder, it will be used by addVideoTrack() */
@@ -187,55 +150,6 @@ public class Session {
 				stream.setDestination(destination, 5006);
 				streamList[0] = stream;
 				sessionUsingTheCamera = this;
-				sessionTrackCount++;
-			}
-		}
-	}
-
-	/** Add default audio track with default configuration
-	 * @throws IOException
-	 */
-	public void addAudioTrack() throws IOException {
-		addAudioTrack(defaultAudioEncoder);
-	}
-
-	/** Add audio track with specified encoder
-	 * @param encoder Can be either Session.AUDIO_AMRNB or Session.AUDIO_AAC
-	 * @throws IOException
-	 */
-	public void addAudioTrack(int encoder) throws IOException {
-		synchronized (LOCK) {
-			if (sessionUsingTheMic != null) {
-				if (sessionUsingTheMic.routingScheme==UNICAST) throw new IllegalStateException("Microphone already in use by another client");
-				else {
-					streamList[1] = sessionUsingTheMic.streamList[1];
-					sessionTrackCount++;
-					return;
-				}
-			}
-			Stream stream = null;
-
-			switch (encoder) {
-			case AUDIO_AMRNB:
-				Log.d(TAG,"Audio streaming: AMR");
-				stream = new AMRNBStream();
-				break;
-			case AUDIO_ANDROID_AMR:
-				Log.d(TAG,"Audio streaming: GENERIC");
-				stream = new GenericAudioStream();
-				break;
-			case AUDIO_AAC:
-				if (Integer.parseInt(android.os.Build.VERSION.SDK)<14) throw new IllegalStateException("This phone does not support AAC :/");
-				Log.d(TAG,"Audio streaming: AAC");
-				stream = new AACStream();
-				break;
-			}
-
-			if (stream != null) {
-				stream.setTimeToLive(defaultTimeToLive);
-				stream.setDestination(destination, 5004);
-				streamList[1] = stream;
-				sessionUsingTheMic = this;
 				sessionTrackCount++;
 			}
 		}

@@ -34,7 +34,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * Spydroid launches an RtspServer, clients can then connect to it and receive audio/video streams from the phone
+ * Spydroid launches an RtspServer, clients can then connect to it and receive video streams from the phone
  */
 public class SpydroidActivity extends Activity implements OnSharedPreferenceChangeListener {
 
@@ -48,9 +48,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 
     /** Default quality of video streams **/
     public static VideoQuality videoQuality = new VideoQuality(640,480,15,500000);
-
-    /** By default AMR is the audio encoder **/
-    public static int audioEncoder = Session.AUDIO_AMRNB;
 
     /** By default H.263 is the video encoder **/
     public static int videoEncoder = Session.VIDEO_H263;
@@ -100,9 +97,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
             version.setText("v???");
         }
 
-        // On android 3.* AAC is not supported so we set the default encoder to AMR-NB, on android 4.* AAC is the default encoder
-        audioEncoder = (Integer.parseInt(android.os.Build.VERSION.SDK)<14) ? Session.AUDIO_AMRNB : Session.AUDIO_AAC;
-        audioEncoder = Integer.parseInt(settings.getString("audio_encoder", String.valueOf(audioEncoder)));
         videoEncoder = Integer.parseInt(settings.getString("video_encoder", String.valueOf(videoEncoder)));
 
         // Read video quality settings from the preferences
@@ -116,7 +110,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
                 videoQuality);
 
         Session.setSurfaceHolder(holder);
-        Session.setDefaultAudioEncoder(audioEncoder);
         Session.setDefaultVideoEncoder(videoEncoder);
         Session.setDefaultVideoQuality(videoQuality);
 
@@ -141,13 +134,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         }
         else if (key.equals("video_bitrate")) {
             videoQuality.bitrate = Integer.parseInt(sharedPreferences.getString("video_bitrate", "0"))*1000;
-        }
-        else if (key.equals("stream_audio")) {
-            if (!sharedPreferences.getBoolean("stream_audio", true)) Session.setDefaultAudioEncoder(0);
-        }
-        else if (key.equals("audio_encoder")) {
-            audioEncoder = Integer.parseInt(sharedPreferences.getString("audio_encoder", "0"));
-            Session.setDefaultAudioEncoder( audioEncoder );
         }
         else if (key.equals("stream_video")) {
             if (!sharedPreferences.getBoolean("stream_video", true)) Session.setDefaultVideoEncoder(0);
