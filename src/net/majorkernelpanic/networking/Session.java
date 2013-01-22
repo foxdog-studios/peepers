@@ -27,8 +27,6 @@ import net.majorkernelpanic.streaming.Stream;
 import net.majorkernelpanic.streaming.audio.AACStream;
 import net.majorkernelpanic.streaming.audio.AMRNBStream;
 import net.majorkernelpanic.streaming.audio.GenericAudioStream;
-import net.majorkernelpanic.streaming.video.H263Stream;
-import net.majorkernelpanic.streaming.video.H264Stream;
 import net.majorkernelpanic.streaming.video.VideoQuality;
 import net.majorkernelpanic.streaming.video.VideoStream;
 import android.hardware.Camera.CameraInfo;
@@ -178,16 +176,7 @@ public class Session {
 			Stream stream = null;
 			VideoQuality.merge(videoQuality,defaultVideoQuality);
 
-			switch (encoder) {
-			case VIDEO_H264:
-				Log.d(TAG,"Video streaming: H.264");
-				stream = new H264Stream(camera);
-				break;
-			case VIDEO_H263:
-				Log.d(TAG,"Video streaming: H.263");
-				stream = new H263Stream(camera);
-				break;
-			}
+            stream = new VideoStream(camera);
 
 			if (stream != null) {
 				Log.d(TAG,"Quality is: "+videoQuality.resX+"x"+videoQuality.resY+"px "+videoQuality.framerate+"fps, "+videoQuality.bitrate+"bps");

@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import net.majorkernelpanic.networking.RtspServer;
 import net.majorkernelpanic.networking.Session;
-import net.majorkernelpanic.streaming.video.H264Stream;
 import net.majorkernelpanic.streaming.video.VideoQuality;
+import net.majorkernelpanic.streaming.video.VideoStream;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -119,7 +119,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         Session.setDefaultAudioEncoder(audioEncoder);
         Session.setDefaultVideoEncoder(videoEncoder);
         Session.setDefaultVideoQuality(videoQuality);
-        H264Stream.setPreferences(settings);
 
         if (rtspServer == null) rtspServer = new RtspServer(defaultRtspPort);
 
