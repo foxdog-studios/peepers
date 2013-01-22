@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2011 GUIGUI Simon, fyhertz@gmail.com
- * 
+ *
  * This file is part of Spydroid (http://code.google.com/p/spydroid-ipcamera/)
- * 
+ *
  * Spydroid is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this source code; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -22,7 +22,6 @@ package net.majorkernelpanic.spydroid;
 
 import java.io.IOException;
 
-import net.majorkernelpanic.networking.HttpServer;
 import net.majorkernelpanic.networking.RtspServer;
 import net.majorkernelpanic.networking.Session;
 import net.majorkernelpanic.streaming.video.H264Stream;
@@ -60,25 +59,25 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-/** 
+/**
  * Spydroid launches an RtspServer, clients can then connect to it and receive audio/video streams from the phone
  */
 public class SpydroidActivity extends Activity implements OnSharedPreferenceChangeListener {
-    
+
     static final public String TAG = "SpydroidActivity";
-    
+
     /** Default listening port for the RTSP server **/
     private final int defaultRtspPort = 8086;
-    
+
     /** Default listening port for the HTTP server **/
     private final int defaultHttpPort = 8080;
-    
+
     /** Default quality of video streams **/
 	public static VideoQuality videoQuality = new VideoQuality(640,480,15,500000);
-	
+
 	/** By default AMR is the audio encoder **/
 	public static int audioEncoder = Session.AUDIO_AMRNB;
-	
+
 	/** By default H.263 is the video encoder **/
 	public static int videoEncoder = Session.VIDEO_H263;
 
@@ -86,9 +85,8 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     public static boolean activityPaused = true, notificationEnabled = true;
     public static Exception lastCaughtException;
 
-    static private CustomHttpServer httpServer = null;
     static private RtspServer rtspServer = null;
-    
+
     private PowerManager.WakeLock wl;
     private SurfaceHolder holder;
     private SurfaceView camera;
@@ -97,10 +95,10 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     private LinearLayout signInformation;
     private Context context;
     private Animation pulseAnimation;
-    
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         setContentView(R.layout.main);
 
         camera = (SurfaceView)findViewById(R.id.smallcameraview);
@@ -115,35 +113,35 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         signStreaming = (TextView)findViewById(R.id.streaming);
         signInformation = (LinearLayout)findViewById(R.id.information);
         pulseAnimation = AnimationUtils.loadAnimation(this, R.anim.pulse);
-        
+
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        
+
         settings.registerOnSharedPreferenceChangeListener(this);
-       	
+
         camera.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder = camera.getHolder();
-		
+
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "net.majorkernelpanic.spydroid.wakelock");
-    
+
     	// Print version number
         try {
 			version.setText("v"+this.getPackageManager().getPackageInfo(this.getPackageName(), 0 ).versionName);
 		} catch (Exception e) {
 			version.setText("v???");
 		}
-        
+
         // On android 3.* AAC is not supported so we set the default encoder to AMR-NB, on android 4.* AAC is the default encoder
         audioEncoder = (Integer.parseInt(android.os.Build.VERSION.SDK)<14) ? Session.AUDIO_AMRNB : Session.AUDIO_AAC;
         audioEncoder = Integer.parseInt(settings.getString("audio_encoder", String.valueOf(audioEncoder)));
         videoEncoder = Integer.parseInt(settings.getString("video_encoder", String.valueOf(videoEncoder)));
-        
-        // Read video quality settings from the preferences 
+
+        // Read video quality settings from the preferences
         videoQuality = VideoQuality.merge(
         		new VideoQuality(
         				settings.getInt("video_resX", 0),
-        				settings.getInt("video_resY", 0), 
-        				Integer.parseInt(settings.getString("video_framerate", "0")), 
+        				settings.getInt("video_resY", 0),
+        				Integer.parseInt(settings.getString("video_framerate", "0")),
         				Integer.parseInt(settings.getString("video_bitrate", "0"))*1000
         		),
         		videoQuality);
@@ -156,7 +154,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         H264Stream.setPreferences(settings);
 
         if (rtspServer == null) rtspServer = new RtspServer(defaultRtspPort, handler);
-        if (httpServer == null) httpServer = new CustomHttpServer(defaultHttpPort, this.getApplicationContext(), handler);
 
         buttonSettings.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -164,7 +161,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 				Intent intent = new Intent(context,OptionsActivity.class);
 	            startActivityForResult(intent, 0);
 			}
-		});        
+		});
         /*buttonClient.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				// Starts ClientActivity, the user can then capture the stream from another phone running Spydroid
@@ -179,12 +176,12 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 	            startActivityForResult(intent, 0);
 			}
 		});
-        
+
         // Did the user disabled the notification ?
         notificationEnabled = settings.getBoolean("notification_enabled", true);
-        
+
     }
-    
+
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     	if (key.equals("video_resX") || key.equals("video_resY")) {
     		videoQuality.resX = sharedPreferences.getInt("video_resX", 0);
@@ -199,7 +196,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     	else if (key.equals("stream_audio")) {
     		if (!sharedPreferences.getBoolean("stream_audio", true)) Session.setDefaultAudioEncoder(0);
     	}
-    	else if (key.equals("audio_encoder")) { 
+    	else if (key.equals("audio_encoder")) {
     		audioEncoder = Integer.parseInt(sharedPreferences.getString("audio_encoder", "0"));
     		Session.setDefaultAudioEncoder( audioEncoder );
     	}
@@ -209,16 +206,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     	else if (key.equals("video_encoder")) {
     		videoEncoder = Integer.parseInt(sharedPreferences.getString("video_encoder", "0"));
     		Session.setDefaultVideoEncoder( videoEncoder );
-    	}
-    	else if (key.equals("enable_http")) {
-    		if (sharedPreferences.getBoolean("enable_http", true)) {
-    			if (httpServer == null) httpServer = new CustomHttpServer(defaultHttpPort, this.getApplicationContext(), handler);
-    		} else {
-    			if (httpServer != null) {
-    				httpServer.stop();
-    				httpServer = null;
-    			}
-    		}
     	}
     	else if (key.equals("enable_rtsp")) {
     		if (sharedPreferences.getBoolean("enable_rtsp", true)) {
@@ -235,14 +222,14 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     		removeNotification();
     	}
     }
-    
+
     public void onStart() {
     	super.onStart();
-    	
+
     	// Lock screen
     	wl.acquire();
-    	
-    	
+
+
     	if (notificationEnabled) {
     		Intent notificationIntent = new Intent(this, SpydroidActivity.class);
     		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -257,35 +244,35 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     		notification.flags |= Notification.FLAG_ONGOING_EVENT;
     		((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).notify(0,notification);
     	}
-    	
+
     }
-    	
+
     public void onStop() {
     	super.onStop();
     	// A WakeLock should only be released when isHeld() is true !
     	if (wl.isHeld()) wl.release();
     }
-    
+
     public void onResume() {
     	super.onResume();
-    	// Determines if user is connected to a wireless network & displays ip 
+    	// Determines if user is connected to a wireless network & displays ip
     	if (!streaming) displayIpAddress();
     	activityPaused = true;
     	startServers();
     	registerReceiver(wifiStateReceiver,new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
     }
-    
+
     public void onPause() {
     	super.onPause();
     	activityPaused = false;
     	unregisterReceiver(wifiStateReceiver);
     }
-    
+
     public void onDestroy() {
     	Log.d(TAG,"SpydroidActivity destroyed");
     	super.onDestroy();
     }
-    
+
     public void onBackPressed() {
     	Intent setIntent = new Intent(Intent.ACTION_MAIN);
     	setIntent.addCategory(Intent.CATEGORY_HOME);
@@ -298,10 +285,10 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         inflater.inflate(R.menu.menu, menu);
         return true;
     }
-    
+
     public boolean onOptionsItemSelected(MenuItem item) {
     	Intent intent;
-    	
+
         switch (item.getItemId()) {
         /*case R.id.client:
             // Starts ClientActivity where user can view stream from another phone
@@ -315,16 +302,16 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
             return true;
         case R.id.quit:
         	// Quits Spydroid i.e. stops the HTTP & RTSP servers
-        	stopServers();  
+        	stopServers();
         	// Remove notification
-        	if (notificationEnabled) removeNotification();          	
-        	finish();	
+        	if (notificationEnabled) removeNotification();
+        	finish();
             return true;
         default:
             return super.onOptionsItemSelected(item);
         }
     }
-    
+
     private void startServers() {
     	if (rtspServer != null) {
     		try {
@@ -333,27 +320,16 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     			log("RtspServer could not be started : "+(e.getMessage()!=null?e.getMessage():"Unknown error"));
     		}
     	}
-    	if (httpServer != null) {
-    		try {
-    			httpServer.start();
-    		} catch (IOException e) {
-    			log("HttpServer could not be started : "+(e.getMessage()!=null?e.getMessage():"Unknown error"));
-    		}
-    	}
     }
 
     private void stopServers() {
-    	if (httpServer != null) {
-    		httpServer.stop();
-    		httpServer = null;
-    	}
     	if (rtspServer != null) {
     		rtspServer.stop();
     		rtspServer = null;
     	}
     }
-    
-    
+
+
     // BroadcastReceiver that detects wifi state changements
     private final BroadcastReceiver wifiStateReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -362,15 +338,15 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         	if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
         		if (!streaming) displayIpAddress();
         	}
-        } 
+        }
     };
-    
+
     private boolean streaming = false;
-    
+
     // The Handler that gets information back from the RtspServer and Session
     private final Handler handler = new Handler() {
-    	
-    	public void handleMessage(Message msg) { 
+
+    	public void handleMessage(Message msg) {
     		switch (msg.what) {
     		case RtspServer.MESSAGE_ERROR:
     			Exception e1 = (Exception)msg.obj;
@@ -380,10 +356,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     		case RtspServer.MESSAGE_LOG:
     			//log((String)msg.obj);
     			break;
-    		case HttpServer.MESSAGE_ERROR:
-    			Exception e2 = (Exception)msg.obj;
-    			lastCaughtException = e2;
-    			break;    			
     		case Session.MESSAGE_START:
     			streaming = true;
     			streamingState(1);
@@ -394,9 +366,9 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     			break;
     		}
     	}
-    	
+
     };
-    
+
     private void displayIpAddress() {
 		WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 		WifiInfo info = wifiManager.getConnectionInfo();
@@ -416,7 +388,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     		streamingState(2);
     	}
     }
-    
+
     public void log(String s) {
     	Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
     }
@@ -445,9 +417,9 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 			signWifi.startAnimation(pulseAnimation);
 		}
 	}
-	
+
 	private void removeNotification() {
 		((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).cancel(0);
 	}
-    
+
 }
