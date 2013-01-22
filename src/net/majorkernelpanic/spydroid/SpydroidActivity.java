@@ -103,10 +103,4 @@ public class SpydroidActivity extends Activity
         super.onPause();
         activityPaused = false;
     }
-
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu, menu);
-        return true;
-    }
 }
