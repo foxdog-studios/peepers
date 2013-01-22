@@ -27,8 +27,6 @@ import net.majorkernelpanic.networking.Session;
 import net.majorkernelpanic.streaming.video.H264Stream;
 import net.majorkernelpanic.streaming.video.VideoQuality;
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -81,7 +79,7 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 	public static int videoEncoder = Session.VIDEO_H263;
 
     /** The HttpServer will use those variables to send reports about the state of the app to the http interface **/
-    public static boolean activityPaused = true, notificationEnabled = true;
+    public static boolean activityPaused = true;
     public static Exception lastCaughtException;
 
     static private RtspServer rtspServer = null;
@@ -160,10 +158,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 	            startActivityForResult(intent, 0);
 			}
 		});
-
-        // Did the user disabled the notification ?
-        notificationEnabled = settings.getBoolean("notification_enabled", true);
-
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
@@ -201,24 +195,12 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
     			}
     		}
     	}
-    	else if (key.equals("notification_enabled")) {
-    		notificationEnabled  = sharedPreferences.getBoolean("notification_enabled", true);
-    		removeNotification();
-    	}
     }
 
     public void onStart() {
     	super.onStart();
-
     	// Lock screen
     	wl.acquire();
-
-
-    	if (notificationEnabled) {
-    		Intent notificationIntent = new Intent(this, SpydroidActivity.class);
-    		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-    	}
-
     }
 
     public void onStop() {
@@ -272,8 +254,6 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
         case R.id.quit:
         	// Quits Spydroid i.e. stops the HTTP & RTSP servers
         	stopServers();
-        	// Remove notification
-        	if (notificationEnabled) removeNotification();
         	finish();
             return true;
         default:
@@ -386,9 +366,4 @@ public class SpydroidActivity extends Activity implements OnSharedPreferenceChan
 			signWifi.startAnimation(pulseAnimation);
 		}
 	}
-
-	private void removeNotification() {
-		((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).cancel(0);
-	}
-
 }
