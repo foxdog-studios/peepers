@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.util.Log;
+import android.view.Surface;
 
 /**
  * Implementation of a subset of the RTSP protocol (RFC 2326)
@@ -30,10 +31,14 @@ public class RtspServer {
 	private final int port;
 	private boolean running = false;
 	private RequestListenerThread listenerThread;
+    private final Surface mPreviewSurface;
 
-	public RtspServer(int port) {
+	public RtspServer(int port, final Surface previewSurface)
+    {
+        super();
 		this.port = port;
-	}
+        mPreviewSurface = previewSurface;
+	} // constructor(int, Surface)
 
 	public void start() throws IOException {
 		if (running) return;
@@ -51,7 +56,7 @@ public class RtspServer {
 		}
 	}
 
-	public static class RequestListenerThread extends Thread implements Runnable {
+    private class RequestListenerThread extends Thread {
 
 		private final ServerSocket server;
 
@@ -77,7 +82,8 @@ public class RtspServer {
 	}
 
 	// One thread per client
-	static class WorkerThread extends Thread implements Runnable {
+	private class WorkerThread extends Thread
+    {
 
 		private final Socket client;
 		private final OutputStream output;
@@ -89,7 +95,8 @@ public class RtspServer {
 		public WorkerThread(final Socket client) throws IOException {
 			this.input = new BufferedReader(new InputStreamReader(client.getInputStream()));
 			this.output = client.getOutputStream();
-			this.session = new Session(client.getLocalAddress(),client.getInetAddress());
+			this.session = new Session(client.getLocalAddress(),client.getInetAddress(),
+            mPreviewSurface);
 			this.client = client;
 		}
 

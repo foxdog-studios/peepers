@@ -7,7 +7,7 @@ import net.majorkernelpanic.streaming.Stream;
 import net.majorkernelpanic.streaming.video.VideoStream;
 import android.hardware.Camera.CameraInfo;
 import android.util.Log;
-import android.view.SurfaceHolder;
+import android.view.Surface;
 
 public class Session {
 
@@ -31,43 +31,28 @@ public class Session {
 	private int sessionTrackCount = 0;
 
 	private static Object LOCK = new Object();
-	private static SurfaceHolder surfaceHolder;
 	private InetAddress origin, destination;
 	private int routingScheme = Session.UNICAST;
 	private int defaultTimeToLive = 64;
 	private Stream[] streamList = new Stream[2];
 	private long timestamp;
 
+
+    private final Surface mPreviewSurface;
+
 	/** Creates a streaming session that can be customized by adding tracks
 	 * @param destination The destination address of the streams
 	 * @param origin The origin address of the streams
 	 */
-	public Session(InetAddress origin, InetAddress destination) {
+	public Session(InetAddress origin, InetAddress destination, final Surface previewSurface)
+    {
+        super();
 		this.destination = destination;
 		this.origin = origin;
 		// This timestamp is used in the session descriptor for the Origin parameter "o="
+        mPreviewSurface = previewSurface;
 		this.timestamp = System.currentTimeMillis();
-	}
-
-	/** Set the Surface required by MediaRecorder to record video */
-	public static void setSurfaceHolder(SurfaceHolder sh) {
-		if (surfaceHolder == sh) return;
-		surfaceHolder = sh;
-		surfaceHolder.addCallback(new SurfaceHolder.Callback() {
-			public void surfaceChanged(SurfaceHolder holder, int format,
-					int width, int height) {
-			}
-			public void surfaceCreated(SurfaceHolder holder) {
-			}
-			public void surfaceDestroyed(SurfaceHolder holder) {
-				Log.d(TAG,"Surface destroyed !!");
-				if (sessionUsingTheCamera != null) {
-					sessionUsingTheCamera.stopAll();
-				}
-			}
-
-		});
-	}
+	} // constructor(InetAddress, InetAddress, SurfaceView)
 
 	/** The destination address for all the streams of the session
 	 * This method will have no effect on already existing tracks
@@ -117,7 +102,7 @@ public class Session {
 			}
 
 			VideoStream stream = new VideoStream(camera);
-            stream.setPreviewDisplay(surfaceHolder.getSurface());
+            stream.setPreviewDisplay(mPreviewSurface);
             stream.setTimeToLive(defaultTimeToLive);
             stream.setDestination(destination, 5006);
             streamList[0] = stream;
@@ -171,16 +156,6 @@ public class Session {
 	/** Returns the number of tracks of this session **/
 	public int getTrackCount() {
 		return sessionTrackCount;
-	}
-
-	/** Indicates whether or not a camera is being used in a session **/
-	public static boolean isCameraInUse() {
-		return sessionUsingTheCamera!=null;
-	}
-
-	/** Indicates whether or not the microphone is being used in a session **/
-	public static boolean isMicrophoneInUse() {
-		return sessionUsingTheMic!=null;
 	}
 
 	public boolean trackExists(int id) {

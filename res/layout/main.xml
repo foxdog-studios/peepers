@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
    <SurfaceView
-        android:id="@+id/smallcameraview"
+        android:id="@+id/camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center" />
