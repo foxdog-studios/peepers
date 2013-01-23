@@ -11,18 +11,13 @@ import android.view.SurfaceHolder;
 
 public class Session {
 
-	public final static String TAG = "Session";
-
-	// Available encoders
-	public final static int VIDEO_H264 = 0x01;
-	public final static int VIDEO_H263 = 0x02;
+	private final static String TAG = "Session";
 
 	// Available routing scheme
 	public final static int UNICAST = 0x01;
 	public final static int MULTICAST = 0x02;
 
 	// Default configuration
-	private static int defaultVideoEncoder = VIDEO_H263;
 	private static int defaultCamera = CameraInfo.CAMERA_FACING_BACK;
 
 	// Indicates if a session is already streaming audio or video
@@ -108,15 +103,14 @@ public class Session {
 	 */
 	public void addVideoTrack() throws IOException
     {
-		addVideoTrack(defaultVideoEncoder, defaultCamera);
+		addVideoTrack(defaultCamera);
 	}
 
 	/** Add video track with specified quality and encoder
-	 * @param encoder Can be either Session.VIDEO_H264 or Session.VIDEO_H263
 	 * @param camera Can be either CameraInfo.CAMERA_FACING_BACK or CameraInfo.CAMERA_FACING_FRONT
 	 * @throws IOException
 	 */
-	public void addVideoTrack(int encoder, int camera) throws IOException {
+	public void addVideoTrack(int camera) throws IOException {
 		synchronized (LOCK) {
 			if (sessionUsingTheCamera != null) {
 				if (sessionUsingTheCamera.routingScheme==UNICAST) throw new IllegalStateException("Camera already in use by another client");
@@ -126,18 +120,14 @@ public class Session {
 					return;
 				}
 			}
-			Stream stream = null;
 
-            stream = new VideoStream(camera);
-
-			if (stream != null) {
-				((VideoStream) stream).setPreviewDisplay(surfaceHolder.getSurface());
-				stream.setTimeToLive(defaultTimeToLive);
-				stream.setDestination(destination, 5006);
-				streamList[0] = stream;
-				sessionUsingTheCamera = this;
-				sessionTrackCount++;
-			}
+			Stream stream = new VideoStream(camera);
+            stream.setPreviewDisplay(surfaceHolder.getSurface());
+            stream.setTimeToLive(defaultTimeToLive);
+            stream.setDestination(destination, 5006);
+            streamList[0] = stream;
+            sessionUsingTheCamera = this;
+            sessionTrackCount++;
 		}
 	}
 
