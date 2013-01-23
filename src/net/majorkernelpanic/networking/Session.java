@@ -140,8 +140,6 @@ public class Session {
             stream = new VideoStream(camera);
 
 			if (stream != null) {
-				Log.d(TAG,"Quality is: "+videoQuality.resX+"x"+videoQuality.resY+"px "+videoQuality.framerate+"fps, "+videoQuality.bitrate+"bps");
-				((VideoStream) stream).setVideoQuality(videoQuality);
 				((VideoStream) stream).setPreviewDisplay(surfaceHolder.getSurface());
 				stream.setTimeToLive(defaultTimeToLive);
 				stream.setDestination(destination, 5006);

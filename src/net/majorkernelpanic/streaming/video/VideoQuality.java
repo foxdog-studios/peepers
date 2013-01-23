@@ -1,39 +1,19 @@
-/*
- * Copyright (C) 2011 GUIGUI Simon, fyhertz@gmail.com
- * 
- * This file is part of Spydroid (http://code.google.com/p/spydroid-ipcamera/)
- * 
- * Spydroid is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This source code is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this source code; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package net.majorkernelpanic.streaming.video;
 
 public class VideoQuality {
 
 	/** Default video stream quality */
 	public final static VideoQuality defaultVideoQualiy = new VideoQuality(640,480,15,500000);
-	
-	/**	Represents a quality for a video stream **/ 
+
+	/**	Represents a quality for a video stream **/
 	public VideoQuality() {}
-	
+
 	/**
 	 * Represents a quality for a video stream
 	 * @param resX The horizontal resolution
 	 * @param resY The vertical resolution
 	 * @param framerate The framerate in frame per seconds
-	 * @param bitrate The bitrate in bit per seconds 
+	 * @param bitrate The bitrate in bit per seconds
 	 */
 	public VideoQuality(int resX, int resY, int framerate, int bitrate) {
 		this.framerate = framerate;
@@ -41,13 +21,13 @@ public class VideoQuality {
 		this.resX = resX;
 		this.resY = resY;
 	}
-	
+
 	public int framerate = 0;
 	public int bitrate = 0;
 	public int resX = 0;
 	public int resY = 0;
 	public int orientation = 90;
-	
+
 	public boolean equals(VideoQuality quality) {
 		if (quality==null) return false;
 		return (quality.resX == this.resX 				&
@@ -55,11 +35,11 @@ public class VideoQuality {
 				 quality.framerate == this.framerate	&
 				 quality.bitrate == this.bitrate 		);
 	}
-	
+
 	public VideoQuality clone() {
 		return new VideoQuality(resX,resY,framerate,bitrate);
 	}
-	
+
 	public static VideoQuality parseQuality(String str) {
 		VideoQuality quality = new VideoQuality(0,0,0,0);
 		if (str != null) {
@@ -82,5 +62,5 @@ public class VideoQuality {
 		if (videoQuality.bitrate==0) videoQuality.bitrate = withVideoQuality.bitrate;
 		return videoQuality;
 	}
-	
+
 }

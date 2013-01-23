@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import net.majorkernelpanic.networking.RtspServer;
 import net.majorkernelpanic.networking.Session;
-import net.majorkernelpanic.streaming.video.VideoQuality;
 import net.majorkernelpanic.streaming.video.VideoStream;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -31,12 +30,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class SpydroidActivity extends Activity
+public final class SpydroidActivity extends Activity
 {
-    private static final String TAG = "SpydroidActivity";
-
-    /** Default quality of video streams **/
-    public static VideoQuality videoQuality = new VideoQuality(640, 480, 15, 500000);
+    private static final String TAG = SpydroidActivity.class.getSimpleName();
 
     /** By default H.263 is the video encoder **/
     public static int videoEncoder = Session.VIDEO_H263;
@@ -64,19 +60,8 @@ public class SpydroidActivity extends Activity
 
         videoEncoder = Integer.parseInt(settings.getString("video_encoder", String.valueOf(videoEncoder)));
 
-        // Read video quality settings from the preferences
-        videoQuality = VideoQuality.merge(
-                new VideoQuality(
-                        settings.getInt("video_resX", 0),
-                        settings.getInt("video_resY", 0),
-                        Integer.parseInt(settings.getString("video_framerate", "0")),
-                        Integer.parseInt(settings.getString("video_bitrate", "0"))*1000
-                ),
-                videoQuality);
-
         Session.setSurfaceHolder(holder);
         Session.setDefaultVideoEncoder(videoEncoder);
-        Session.setDefaultVideoQuality(videoQuality);
 
         if (rtspServer == null) {
             rtspServer = new RtspServer(8086);

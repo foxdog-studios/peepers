@@ -15,9 +15,7 @@ import android.view.SurfaceHolder;
 public final class VideoStream extends MediaStream {
     private static final String TAG = "VideoStream";
 
-    private VideoQuality quality = VideoQuality.defaultVideoQualiy.clone();
     private SurfaceHolder.Callback surfaceHolderCallback = null;
-    private boolean qualityHasChanged = false;
     private int videoEncoder;
     private int cameraId;
     private Camera camera;
@@ -39,59 +37,6 @@ public final class VideoStream extends MediaStream {
                 this.cameraId = i;
                 break;
             }
-        }
-    }
-
-    /**
-     * Modifies the resolution of the stream. You can call this method at any time
-     * and changes will take effect next time you call prepare()
-     * setVideoQuality() may be more convenient
-     * @param width Width of the stream
-     * @param height height of the stream
-     */
-    public void setVideoSize(int width, int height) {
-        if (quality.resX != width || quality.resY != height) {
-            quality.resX = width;
-            quality.resY = height;
-            qualityHasChanged = true;
-        }
-    }
-
-    /**
-     * Modifies the framerate of the stream. You can call this method at any time
-     * and changes will take effect next time you call prepare()
-     * setVideoQuality() may be more convenient
-     * @param rate Framerate of the stream
-     */
-    public void setVideoFramerate(int rate) {
-        if (quality.framerate != rate) {
-            quality.framerate = rate;
-            qualityHasChanged = true;
-        }
-    }
-
-    /**
-     * Modifies the bitrate of the stream. You can call this method at any time
-     * and changes will take effect next time you call prepare()
-     * setVideoQuality() may be more convenient
-     * @param bitrate Bitrate of the stream in bit per second
-     */
-    public void setVideoEncodingBitrate(int bitrate) {
-        if (quality.bitrate != bitrate) {
-            quality.bitrate = bitrate;
-            qualityHasChanged = true;
-        }
-    }
-
-    /**
-     * Modifies the quality of the stream. You can call this method at any time
-     * and changes will take effect next time you call prepare()
-     * @param videoQuality Quality of the stream
-     */
-    public void setVideoQuality(VideoQuality videoQuality) {
-        if (!quality.equals(videoQuality)) {
-            quality = videoQuality;
-            qualityHasChanged = true;
         }
     }
 
@@ -150,7 +95,7 @@ public final class VideoStream extends MediaStream {
 
         // If an exception is thrown after the camera was open, we must absolutly release it !
         try {
-            camera.setDisplayOrientation(quality.orientation);
+            camera.setDisplayOrientation(90);
             camera.unlock();
             super.setCamera(camera);
 
@@ -172,14 +117,11 @@ public final class VideoStream extends MediaStream {
             }
 
             super.setVideoEncoder(videoEncoder);
-            super.setVideoSize(quality.resX,quality.resY);
-            super.setVideoFrameRate(quality.framerate);
-            super.setVideoEncodingBitRate(quality.bitrate);
+            super.setVideoSize(640, 480);
+            super.setVideoFrameRate(15);
+            super.setVideoEncodingBitRate(500000);
 
             super.prepare();
-
-            // Quality has been updated
-            qualityHasChanged = false;
 
         } catch (IOException e) {
             camera.release();
