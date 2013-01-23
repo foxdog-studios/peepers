@@ -1,5 +1,6 @@
 package net.majorkernelpanic.spydroid;
 
+import java.io.InputStream;
 import java.io.IOException;
 
 import android.app.Activity;
@@ -22,6 +23,7 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
 
     private boolean mIsRecording = false;
     private MediaRecorder mRecorder = null;
+    private RtpStreamer mRtpStreamer = null;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState)
@@ -29,9 +31,8 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        if (tryOpenSockets())
+        if (tryOpenSockets() && tryStartRtpStreamer())
         {
-            buildMediaRecorder();
             initialisePreviewDisplay();
         } // if
     } // onCreate(Bundle)
@@ -77,14 +78,22 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
         return mServerSocket != null && mReceiver != null && mServerSocket != null;
     } // tryOpenSockets()
 
-    private void buildMediaRecorder()
+    private boolean tryStartRtpStreamer()
     {
-        mRecorder = new MediaRecorder();
-        mRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
-        mRecorder.setOutputFile(mSender.getFileDescriptor());
-    } // buildMediaRecorder()
+        final InputStream videoStream;
+        try
+        {
+            videoStream = mReceiver.getInputStream();
+        } // try
+        catch (final IOException e)
+        {
+            Log.e(TAG, "An exception occurred while getting the receive socket input stream", e);
+            return false;
+        } // catch
+        mRtpStreamer = new RtpStreamer(videoStream);
+        mRtpStreamer.start();
+        return true;
+    } // start
 
     private void initialisePreviewDisplay()
     {
@@ -96,6 +105,12 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
     @Override
     protected void onDestroy()
     {
+        if (mRtpStreamer != null)
+        {
+            mRtpStreamer.stop();
+            mRtpStreamer = null;
+        } // if
+
         if (mSender != null)
         {
             try
@@ -148,6 +163,11 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
     @Override
     public void surfaceCreated(final SurfaceHolder holder)
     {
+        mRecorder = new MediaRecorder();
+        mRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
+        mRecorder.setOutputFile(mSender.getFileDescriptor());
         mRecorder.setPreviewDisplay(holder.getSurface());
 
         try
@@ -157,6 +177,8 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
         catch (final IOException e)
         {
             Log.e(TAG, "Cannot start recording", e);
+            mRecorder.release();
+            mRecorder = null;
             return;
         } // catch
 
@@ -169,9 +191,9 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
     {
         if (mIsRecording)
         {
-            mRecorder.stop();
             mRecorder.reset();
             mRecorder.release();
+            mRecorder = null;
             mIsRecording = false;
         } // if
     } // surfaceDestroyed(SurfaceHolder)
