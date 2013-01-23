@@ -7,8 +7,6 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.List;
 
-import net.majorkernelpanic.streaming.video.VideoQuality;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
@@ -104,8 +102,7 @@ public class UriParser {
 			for (Iterator<NameValuePair> it = params.iterator();it.hasNext();) {
 				NameValuePair param = it.next();
 				if (param.getName().equals("h263")) {
-					VideoQuality quality = VideoQuality.parseQuality(param.getValue());
-					session.addVideoTrack(Session.VIDEO_H263, camera, quality);
+					session.addVideoTrack(Session.VIDEO_H263, camera);
 				}
 			}
 

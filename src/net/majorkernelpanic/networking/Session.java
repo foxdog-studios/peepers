@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import net.majorkernelpanic.streaming.Stream;
-import net.majorkernelpanic.streaming.video.VideoQuality;
 import net.majorkernelpanic.streaming.video.VideoStream;
 import android.hardware.Camera.CameraInfo;
 import android.util.Log;
@@ -23,7 +22,6 @@ public class Session {
 	public final static int MULTICAST = 0x02;
 
 	// Default configuration
-	private static VideoQuality defaultVideoQuality = VideoQuality.defaultVideoQualiy.clone();
 	private static int defaultVideoEncoder = VIDEO_H263;
 	private static int defaultCamera = CameraInfo.CAMERA_FACING_BACK;
 
@@ -54,11 +52,6 @@ public class Session {
 		this.origin = origin;
 		// This timestamp is used in the session descriptor for the Origin parameter "o="
 		this.timestamp = System.currentTimeMillis();
-	}
-
-	/** Set default video stream quality, it will be used by addVideoTrack */
-	public static void setDefaultVideoQuality(VideoQuality quality) {
-		defaultVideoQuality = quality;
 	}
 
 	/** Set the default video encoder, it will be used by addVideoTrack() */
@@ -115,16 +108,15 @@ public class Session {
 	 */
 	public void addVideoTrack() throws IOException
     {
-		addVideoTrack(defaultVideoEncoder, defaultCamera, defaultVideoQuality);
+		addVideoTrack(defaultVideoEncoder, defaultCamera);
 	}
 
 	/** Add video track with specified quality and encoder
 	 * @param encoder Can be either Session.VIDEO_H264 or Session.VIDEO_H263
 	 * @param camera Can be either CameraInfo.CAMERA_FACING_BACK or CameraInfo.CAMERA_FACING_FRONT
-	 * @param videoQuality Will determine the bitrate,framerate and resolution of the stream
 	 * @throws IOException
 	 */
-	public void addVideoTrack(int encoder, int camera, VideoQuality videoQuality) throws IOException {
+	public void addVideoTrack(int encoder, int camera) throws IOException {
 		synchronized (LOCK) {
 			if (sessionUsingTheCamera != null) {
 				if (sessionUsingTheCamera.routingScheme==UNICAST) throw new IllegalStateException("Camera already in use by another client");
@@ -135,7 +127,6 @@ public class Session {
 				}
 			}
 			Stream stream = null;
-			VideoQuality.merge(videoQuality,defaultVideoQuality);
 
             stream = new VideoStream(camera);
 
