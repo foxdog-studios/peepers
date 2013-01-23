@@ -34,9 +34,6 @@ public final class SpydroidActivity extends Activity
 {
     private static final String TAG = SpydroidActivity.class.getSimpleName();
 
-    /** By default H.263 is the video encoder **/
-    public static int videoEncoder = Session.VIDEO_H263;
-
     /** The HttpServer will use those variables to send reports about the state of the app to the http interface **/
     public static boolean activityPaused = true;
     public static Exception lastCaughtException;
@@ -58,10 +55,7 @@ public final class SpydroidActivity extends Activity
         camera.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder = camera.getHolder();
 
-        videoEncoder = Integer.parseInt(settings.getString("video_encoder", String.valueOf(videoEncoder)));
-
         Session.setSurfaceHolder(holder);
-        Session.setDefaultVideoEncoder(videoEncoder);
 
         if (rtspServer == null) {
             rtspServer = new RtspServer(8086);

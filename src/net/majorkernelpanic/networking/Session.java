@@ -49,11 +49,6 @@ public class Session {
 		this.timestamp = System.currentTimeMillis();
 	}
 
-	/** Set the default video encoder, it will be used by addVideoTrack() */
-	public static void setDefaultVideoEncoder(int encoder) {
-		defaultVideoEncoder = encoder;
-	}
-
 	/** Set the Surface required by MediaRecorder to record video */
 	public static void setSurfaceHolder(SurfaceHolder sh) {
 		if (surfaceHolder == sh) return;
@@ -121,7 +116,7 @@ public class Session {
 				}
 			}
 
-			Stream stream = new VideoStream(camera);
+			VideoStream stream = new VideoStream(camera);
             stream.setPreviewDisplay(surfaceHolder.getSurface());
             stream.setTimeToLive(defaultTimeToLive);
             stream.setDestination(destination, 5006);

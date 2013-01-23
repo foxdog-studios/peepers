@@ -102,7 +102,7 @@ public class UriParser {
 			for (Iterator<NameValuePair> it = params.iterator();it.hasNext();) {
 				NameValuePair param = it.next();
 				if (param.getName().equals("h263")) {
-					session.addVideoTrack(Session.VIDEO_H263, camera);
+					session.addVideoTrack(camera);
 				}
 			}
 
