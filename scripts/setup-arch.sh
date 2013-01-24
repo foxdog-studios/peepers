@@ -25,6 +25,11 @@ while getopts :a opt; do
 done
 unset opt usage
 
+sudo pacman --needed --noconfirm -Sy \
+        git \
+        python \
+        vlc
+
 if $install_aur; then
     yaourt --needed --noconfirm -Sy \
             android-ndk \
@@ -36,4 +41,12 @@ if $install_aur; then
 
 fi
 unset install_aur
+
+# Install bashir
+if ! which bashir &> /dev/null ; then
+    cd /tmp
+    git clone gitolite@foxdogstudios.com:bashir
+    bashir/scripts/install.sh
+    rm -fr /bashir
+fi
 
