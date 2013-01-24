@@ -165,7 +165,7 @@ public final class VideoStreamerActivity extends Activity implements SurfaceHold
     {
         mRecorder = new MediaRecorder();
         mRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
         mRecorder.setOutputFile(mSender.getFileDescriptor());
         mRecorder.setPreviewDisplay(holder.getSurface());
