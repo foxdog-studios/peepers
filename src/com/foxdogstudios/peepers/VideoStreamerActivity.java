@@ -1,4 +1,4 @@
-package net.majorkernelpanic.spydroid;
+package com.foxdogstudios.peepers;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -12,9 +12,9 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public final class SpydroidActivity extends Activity implements SurfaceHolder.Callback
+public final class VideoStreamerActivity extends Activity implements SurfaceHolder.Callback
 {
-    private static final String TAG = SpydroidActivity.class.getSimpleName();
+    private static final String TAG = VideoStreamerActivity.class.getSimpleName();
     private static final String LOCAL_SERVER_SOCKET_NAME = "com.foxdogstudios.peepers";
 
     private LocalServerSocket mServerSocket = null;
@@ -199,5 +199,5 @@ public final class SpydroidActivity extends Activity implements SurfaceHolder.Ca
     } // surfaceDestroyed(SurfaceHolder)
 
 
-} // class SpydroidActivity
+} // class VideoStreamerActivity
 

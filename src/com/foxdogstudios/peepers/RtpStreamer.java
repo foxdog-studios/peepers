@@ -1,4 +1,4 @@
-package net.majorkernelpanic.spydroid;
+package com.foxdogstudios.peepers;
 
 import java.io.InputStream;
 import java.io.IOException;
