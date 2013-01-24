@@ -8,13 +8,14 @@ usage='
 
     Usage:
 
-        # build.sh [-bcilov]
+        # build.sh [-bcilouv]
 
     -b  build
     -c  clean
     -i  install
     -l  launch
     -o  log
+    -u  uninstall
     -v  video
 '
 
@@ -23,15 +24,17 @@ clean=false
 install=false
 launch=false
 log=false
+uninstall=false
 video=false
 
-while getopts :bcilov opt; do
+while getopts :bcilouv opt; do
     case "${opt}" in
         b) build=true ;;
         c) clean=true ;;
         i) install=true ;;
         l) launch=true ;;
         o) log=true ;;
+        u) uninstall=true ;;
         v) video=true ;;
         \?|*)
             echo "${usage}"
@@ -42,6 +45,11 @@ done
 unset opt usage
 
 cd ..
+
+if $uninstall; then
+    adb uninstall com.foxdogstudios.peepers
+fi
+unset uninstall
 
 if $clean; then
     ant clean
