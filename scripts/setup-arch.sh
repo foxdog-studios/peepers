@@ -27,6 +27,7 @@ unset opt usage
 
 sudo pacman --needed --noconfirm -Sy \
         git \
+        kde-konsole \
         python \
         vlc
 

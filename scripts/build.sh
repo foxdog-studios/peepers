@@ -64,7 +64,7 @@ fi
 unset launch
 
 if $video; then
-    vlc udp://@:9000 &> /dev/null &
+    scripts/video.sh
 fi
 
 if $log; then
