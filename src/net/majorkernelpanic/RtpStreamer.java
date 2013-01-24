@@ -54,16 +54,16 @@ import android.util.Log;
 
     private void stream()
     {
+        byte[] buffer = new byte[2048];
+
         try
         {
             final DatagramSocket socket = new DatagramSocket();
-            final DatagramPacket packet = new DatagramPacket(
-                    new byte[]{ 65, 66, 67 },
-                    3,
-                    InetAddress.getByName("kilburn"),
-                    9000);
-            while (mIsRunning)
+            final DatagramPacket packet = new DatagramPacket(buffer, 3, InetAddress.getByName("kilburn"), 9000);
+            int numBytes;
+            while ((numBytes = mVideoStream.read(buffer)) != -1)
             {
+                packet.setData(buffer, 0, numBytes);
                 socket.send(packet);
             }
 
