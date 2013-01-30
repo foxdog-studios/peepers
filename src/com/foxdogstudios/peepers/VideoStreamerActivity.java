@@ -17,6 +17,7 @@ public final class VideoStreamerActivity extends Activity implements SurfaceHold
     private static final String TAG = VideoStreamerActivity.class.getSimpleName();
     private static final String LOCAL_SERVER_SOCKET_NAME = "com.foxdogstudios.peepers";
 
+    private static final int BUFFER_SIZE = 500000;
     private LocalServerSocket mServerSocket = null;
     private LocalSocket mReceiver = null;
     private LocalSocket mSender = null;
@@ -42,40 +43,19 @@ public final class VideoStreamerActivity extends Activity implements SurfaceHold
         try
         {
             mServerSocket = new LocalServerSocket(LOCAL_SERVER_SOCKET_NAME);
+            mReceiver = new LocalSocket();
+            mReceiver.connect(mServerSocket.getLocalSocketAddress());
+            mReceiver.setReceiveBufferSize(BUFFER_SIZE);
+            mSender = mServerSocket.accept();
+            mSender.setSendBufferSize(BUFFER_SIZE);
         } // try
         catch (final IOException e)
         {
-            Log.e(TAG, "An exception occured while creating the local server socket", e);
+            Log.e(TAG, "Could not open sockets", e);
+            return false;
         } // catch
 
-        if (mServerSocket != null)
-        {
-            mReceiver = new LocalSocket();
-            try
-            {
-                mReceiver.connect(mServerSocket.getLocalSocketAddress());
-            } // try
-            catch (final IOException e)
-            {
-                Log.e(TAG, "An exception occured while connecting to the local server socket", e);
-                mReceiver = null;
-            } // catch
-        } // if
-
-        if (mReceiver != null)
-        {
-            try
-            {
-                mSender = mServerSocket.accept();
-            } // try
-            catch (final IOException e)
-            {
-                Log.e(TAG, "An exception occured while waiting for a client to connect to the "
-                        + "local server socket", e);
-            } // catch
-        } // if
-
-        return mServerSocket != null && mReceiver != null && mServerSocket != null;
+        return true;
     } // tryOpenSockets()
 
     private boolean tryStartRtpStreamer()

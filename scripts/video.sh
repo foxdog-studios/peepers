@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/bashir
 
-konsole -e vlc udp://@:9000 --network-caching=100 &> /dev/null & disown
+cd ..
+konsole -e vlc peepers.sdp --network-caching=100 &> /dev/null & disown
 
