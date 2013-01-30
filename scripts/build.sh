@@ -27,6 +27,11 @@ log=false
 uninstall=false
 video=false
 
+if [[ $# -eq 0 ]]; then
+    echo "${usage}";
+    exit 1
+fi
+
 while getopts :bcilouv opt; do
     case "${opt}" in
         b) build=true ;;
