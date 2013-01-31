@@ -3,7 +3,6 @@ package com.foxdogstudios.peepers;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Arrays;
@@ -28,13 +27,13 @@ import android.util.Log;
 
     private final byte[] mBuffer = new byte[MTU];
     private final InputStream mVideoStream;
-    private int mBufferEnd = 0;
     private Thread mStreamerThread = null;
 	private MulticastSocket mSocket = null;
 	private DatagramPacket mPacket = null;
     private int mSequenceNumber = Integer.MIN_VALUE;
 
-    private static final int MAX_Q = 500;
+    // XXX: What's going on here?
+    private static final int MAX_Q = 50;
     private double mMeanPictureDuration = 0.0;
     private int mQ = 0;
 
@@ -83,25 +82,33 @@ import android.util.Log;
 
 	private void stream() throws IOException
     {
-		mBuffer[0] = (byte) 0x80;
-
-		// Payload Type
-		mBuffer[1] = (byte) 96;
-
-		// Byte 2,3        ->  Sequence Number
-		// Byte 4,5,6,7    ->  Timestamp
-		// Byte 8,9,10,11  ->  Sync Source Identifier
-		setBuffer(new Random().nextInt(), 8, 12);
-
-        // H263+ Header
-		// Each packet we send has a two byte long header (See section 5.1 of RFC 4629)
-		mBuffer[H263_HEADER_OFFSET] = 0x00;
-		mBuffer[H263_HEADER_OFFSET + 1] = 0x00;
-
 		mSocket = new MulticastSocket();
-		mPacket = new DatagramPacket(mBuffer, 0);
+		mPacket = new DatagramPacket(mBuffer, 0 /* length */);
         mPacket.setAddress(InetAddress.getByName(HOST_NAME));
         mPacket.setPort(HOST_PORT);
+
+		mBuffer[0] = (byte) 0x80;
+
+		// RTP payload type: dyanamic
+		mBuffer[1] = (byte) 96;
+
+        final Random random = new Random();
+
+		// Initial sequence number (bytes 2 and 3 of the RTP header),
+        // set by send().
+        mSequenceNumber = random.nextInt();
+
+		// Initial timestamp (bytes 4, 5, 6 and 7 of the RTP header),
+        // updated by streamLoop() on picture start.
+        setBuffer(0L, 4, 8);
+
+		// Sync source identifier (bytes 8, 9, 10 and 11 of the RTP
+        // header).
+		setBuffer(random.nextInt(), 8, 12);
+
+        // H263+ header (see section 5.1 of RFC 4629)
+		mBuffer[H263_HEADER_OFFSET] = 0x00;
+		mBuffer[H263_HEADER_OFFSET + 1] = 0x00;
 
         skipToMdatData();
         streamLoop();
@@ -182,6 +189,7 @@ import android.util.Log;
 
                 // The next packet starts a new picture, so update the
                 // timestamp.
+                // XXX: What's going on here?
                 updateMeanPictureDuration(pictureDuration);
                 pictureDuration = 0L;
                 timestamp += mMeanPictureDuration;
@@ -204,8 +212,7 @@ import android.util.Log;
 
     private int findPictureStartInH263Payload()
     {
-        // Each h263 frame starts with: 0000 0000 0000 0000 1000 00??
-        // Here we search where the next frame begins in the bit stream
+        // H263+ pictures start with 0000 0000 0000 0000 1000 00??
         for (int i = H263_PAYLOAD_OFFSET; i < MTU - 2; i++)
         {
             if (mBuffer[i] == 0 && mBuffer[i + 1] == 0 && (mBuffer[i + 2] & 0xfc) == 0x80)
@@ -216,6 +223,7 @@ import android.util.Log;
         return -1;
     } // findPictureStartInH263Payload()
 
+    // XXX: What's going on here?
     private void updateMeanPictureDuration(final long duration)
     {
         mMeanPictureDuration = (mMeanPictureDuration * mQ + duration) / (mQ + 1);
@@ -227,7 +235,7 @@ import android.util.Log;
 
 	private void send(final int length) throws IOException
     {
-		setBuffer(++mSequenceNumber, 2, 4);
+		setBuffer(mSequenceNumber++, 2, 4);
 		mPacket.setLength(length);
 		mSocket.send(mPacket);
 	} // send(int)
