@@ -107,17 +107,18 @@ import android.util.Log;
         streamLoop();
 	} // stream()
 
-	// The InputStream may start with a header that we need to skip
 	private void skipToMdatData() throws IOException
     {
-        final byte[] buffer = new byte[3];
-        // XXX: This is flakely
-		// Skip all atoms preceding mdat atom
-		while (true) {
-			while (mVideoStream.read() != 'm');
-			mVideoStream.read(buffer);
-			if (buffer[0] == 'd' && buffer[1] == 'a' && buffer[2] == 't') break;
-		}
+        final byte[] mdat = { 'm', 'd', 'a', 't' };
+        final byte[] buffer = new byte[mdat.length];
+		do
+        {
+            int length = mdat.length;
+            while (length > 0)
+            {
+                length -= mVideoStream.read(buffer, mdat.length - length, length);
+            } // while
+		} while (!Arrays.equals(buffer, mdat));
 	} // skipToMdatData()
 
 	private void streamLoop() throws IOException
@@ -144,9 +145,8 @@ import android.util.Log;
 
             // Fill the RTP payload
             final long beforeFill = SystemClock.elapsedRealtime();
-            fillBuffer(payloadLength);
+            payloadLength = fillBuffer(payloadLength);
             duration += SystemClock.elapsedRealtime() - beforeFill;
-
 
             final int pictureStart = findPictureStartInH263Payload();
 
@@ -174,7 +174,7 @@ import android.util.Log;
         } // while
 	} // streamLoop()
 
-	private void fillBuffer(final int payloadLength) throws IOException
+	private int fillBuffer(final int payloadLength) throws IOException
     {
         int offset = H263_PAYLOAD_OFFSET + payloadLength;
         int length = MTU - H263_PAYLOAD_OFFSET - payloadLength;
@@ -189,6 +189,8 @@ import android.util.Log;
             offset += bytesRead;
             length -= bytesRead;
 		} // while
+
+        return MTU - H263_PAYLOAD_OFFSET;
 	} // fillBuffer(int)
 
     private int findPictureStartInH263Payload()
