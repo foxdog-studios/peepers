@@ -3,7 +3,9 @@
 set -o errexit
 set -o nounset
 
-usage='
+function usage
+{
+    echo '
     Build, install and/or run Peepers
 
     Usage:
@@ -18,6 +20,12 @@ usage='
     -u  uninstall
     -v  video
 '
+    exit 1
+}
+
+if [[ $# -eq 0 ]]; then
+    usage
+fi
 
 build=false
 clean=false
@@ -26,11 +34,6 @@ launch=false
 log=false
 uninstall=false
 video=false
-
-if [[ $# -eq 0 ]]; then
-    echo "${usage}";
-    exit 1
-fi
 
 while getopts :bcilouv opt; do
     case "${opt}" in
@@ -41,10 +44,7 @@ while getopts :bcilouv opt; do
         o) log=true ;;
         u) uninstall=true ;;
         v) video=true ;;
-        \?|*)
-            echo "${usage}"
-            exit 1
-            ;;
+        \?|*) usage ;;
     esac
 done
 unset opt usage

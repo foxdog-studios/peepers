@@ -16,7 +16,7 @@ import android.util.Log;
 {
     private static final String TAG = RtpStreamer.class.getSimpleName();
 
-    private static final String HOST_NAME = "hopper";
+    private static final String HOST_NAME = "kilburn";
     // First unprivileged UDP port
     private static final int HOST_PORT = 1024;
 
@@ -24,14 +24,24 @@ import android.util.Log;
     private static final int H263_FRAME_START_LENGTH = 2;
     private static final int H263_PAYLOAD_OFFSET = H263_HEADER_OFFSET + H263_FRAME_START_LENGTH;
 
+	private static final int MAXPACKETSIZE = 1400;
+	private static final int RTP_HEADER_LENGTH = 12;
+	private static final int rtphl = RTP_HEADER_LENGTH;
+	private static final int MTU = 1500;
+
     private final InputStream mVideoStream;
     private final byte[] mBuffer = new byte[MTU];
     private int mBufferEnd = 0;
-    private DatagramSocket mSocket = null;
-    private DatagramPacket mPacket = null;
     private int mSequenceNumber = Integer.MIN_VALUE;
     private Thread mStreamerThread = null;
+	private MulticastSocket mSocket;
+	private DatagramPacket mPacket;
 
+	private int seq = 0;
+	private boolean upts = false;
+	private int ssrc;
+
+	private Statistics stats = new Statistics();
     private volatile boolean mIsRunning = false;
 
     /* package */ RtpStreamer(final InputStream videoStream)
@@ -52,7 +62,14 @@ import android.util.Log;
             @Override
             public void run()
             {
-                stream();
+                try
+                {
+                    stream();
+                } // try
+                catch (final IOException e)
+                {
+                    Log.w(TAG, "An exception occured while streaming", e);
+                } // catch
             } // run()
         };
         mStreamerThread.start();
@@ -68,109 +85,110 @@ import android.util.Log;
         mStreamerThread.interrupt();
     } // stop()
 
-// COPY PASTE
+	private void stream() throws IOException
+    {
+		mBuffer[0] = (byte) 0x80;
 
+		// Payload Type
+		mBuffer[1] = (byte) 96;
 
-	private final static int MAXPACKETSIZE = 1400;
-	private Statistics stats = new Statistics();
+		// Byte 2,3        ->  Sequence Number
+		// Byte 4,5,6,7    ->  Timestamp
+		// Byte 8,9,10,11  ->  Sync Source Identifier
+		setBuffer((ssrc=(new Random()).nextInt()),8,12);
 
-	public void stream() {
-		long time, duration = 0, ts = 0;
-		int i = 0, j = 0, tr;
-		boolean firstFragment = true;
-
-
-		// This will skip the MPEG4 header if this step fails we can't stream anything :(
-		try {
-            initSocket();
-            setDestination(InetAddress.getByName(HOST_NAME), HOST_PORT);
-			skipHeader();
-		} catch (IOException e) {
-			Log.e(TAG,"Couldn't skip mp4 header :/");
-			return;
-		}
-
+        // H263+ Header
 		// Each packet we send has a two byte long header (See section 5.1 of RFC 4629)
-		buffer[rtphl] = 0;
-		buffer[rtphl+1] = 0;
+		mBuffer[rtphl] = 0;
+		mBuffer[rtphl+1] = 0;
 
-		try {
-			while (running) {
-				time = SystemClock.elapsedRealtime();
-				if (fill(rtphl+j+2,MAXPACKETSIZE-rtphl-j-2)<0) return;
-				duration += SystemClock.elapsedRealtime() - time;
-				j = 0;
-				// Each h263 frame starts with: 0000 0000 0000 0000 1000 00??
-				// Here we search where the next frame begins in the bit stream
-				for (i=rtphl+2;i<MAXPACKETSIZE-1;i++) {
-					if (buffer[i]==0 && buffer[i+1]==0 && (buffer[i+2]&0xFC)==0x80) {
-						j=i;
-						break;
-					}
-				}
-				// Parse temporal reference
-				tr = (buffer[i+2]&0x03)<<6 | (buffer[i+3]&0xFF)>>2;
-				//Log.d(TAG,"j: "+j+" buffer: "+printBuffer(rtphl, rtphl+5)+" tr: "+tr);
-				if (firstFragment) {
-					// This is the first fragment of the frame -> header is set to 0x0400
-					buffer[rtphl] = 4;
-					firstFragment = false;
-				} else {
-					buffer[rtphl] = 0;
-				}
-				if (j>0) {
-					// We have found the end of the frame
-					stats.push(duration);
-					ts+= stats.average(); duration = 0;
-					//Log.d(TAG,"End of frame ! duration: "+stats.average());
-					// The last fragment of a frame has to be marked
-					markNextPacket();
-					send(j);
-					updateTimestamp(ts*90);
-					System.arraycopy(buffer,j+2,buffer,rtphl+2,MAXPACKETSIZE-j-2);
-					j = MAXPACKETSIZE-j-2;
-					firstFragment = true;
-				} else {
-					// We have not found the beginning of another frame
-					// The whole packet is a fragment of a frame
-					send(MAXPACKETSIZE);
-				}
-			}
-		} catch (IOException e) {
-			running = false;
-			Log.e(TAG,"IOException: "+e.getMessage());
-			e.printStackTrace();
-		}
+		mSocket = new MulticastSocket();
+		mPacket = new DatagramPacket(mBuffer, 1);
+        mPacket.setAddress(InetAddress.getByName(HOST_NAME));
+        mPacket.setPort(HOST_PORT);
 
-		Log.d(TAG,"H263 Packetizer stopped !");
-
-	}
-
-	private int fill(int offset,int length) throws IOException {
-
-		int sum = 0, len;
-
-		while (sum<length) {
-			len = mVideoStream.read(buffer, offset+sum, length-sum);
-			if (len<0) {
-				throw new IOException("End of stream");
-			}
-			else sum+=len;
-		}
-
-		return sum;
-
-	}
+        skipToMdatData();
+        streamLoop();
+	} // stream()
 
 	// The InputStream may start with a header that we need to skip
-	private void skipHeader() throws IOException {
+	private void skipToMdatData() throws IOException
+    {
+        final byte[] buffer = new byte[3];
+        // XXX: This is flakely
 		// Skip all atoms preceding mdat atom
 		while (true) {
 			while (mVideoStream.read() != 'm');
-			mVideoStream.read(buffer,rtphl,3);
-			if (buffer[rtphl] == 'd' && buffer[rtphl+1] == 'a' && buffer[rtphl+2] == 't') break;
+			mVideoStream.read(buffer);
+			if (buffer[0] == 'd' && buffer[1] == 'a' && buffer[2] == 't') break;
 		}
+	} // skipToMdatData()
+
+	private void streamLoop() throws IOException
+    {
+		long time;
+        long duration = 0;
+        long ts = 0;
+		int i = 0;
+        int j = 0;
+		boolean firstFragment = true;
+
+        while (mIsRunning)
+        {
+            time = SystemClock.elapsedRealtime();
+            fill(rtphl + j + 2, MAXPACKETSIZE - rtphl - j - 2);
+            duration += SystemClock.elapsedRealtime() - time;
+            j = 0;
+            // Each h263 frame starts with: 0000 0000 0000 0000 1000 00??
+            // Here we search where the next frame begins in the bit stream
+            for (i=rtphl+2;i<MAXPACKETSIZE-1;i++) {
+                if (mBuffer[i]==0 && mBuffer[i+1]==0 && (mBuffer[i+2]&0xFC)==0x80) {
+                    j=i;
+                    break;
+                }
+            }
+            if (firstFragment) {
+                // This is the first fragment of the frame -> header is set to 0x0400
+                mBuffer[rtphl] = 4;
+                firstFragment = false;
+            } else {
+                mBuffer[rtphl] = 0;
+            }
+            if (j>0) {
+                // We have found the end of the frame
+                stats.push(duration);
+                ts+= stats.average(); duration = 0;
+                //Log.d(TAG,"End of frame ! duration: "+stats.average());
+                // The last fragment of a frame has to be marked
+                markNextPacket();
+                send(j);
+                setBuffer(ts * 90, 4, 8); // Update timestamp
+                System.arraycopy(mBuffer,j+2,mBuffer,rtphl+2,MAXPACKETSIZE-j-2);
+                j = MAXPACKETSIZE-j-2;
+                firstFragment = true;
+            } else {
+                // We have not found the beginning of another frame
+                // The whole packet is a fragment of a frame
+                send(MAXPACKETSIZE);
+            }
+        }
+
 	}
+
+	private void fill(final int offset, final int length) throws IOException
+    {
+		int totalBytesRead = 0;
+		while (totalBytesRead < length)
+        {
+			final int bytesRead = mVideoStream.read(mBuffer, offset + totalBytesRead,
+                    length - totalBytesRead);
+			if (bytesRead == -1)
+            {
+				throw new IOException("Video stream ended");
+			} // if
+			totalBytesRead += bytesRead;
+		} // while
+	} // fill(int, int)
 
 	private static class Statistics {
 
@@ -187,121 +205,34 @@ import android.util.Log;
 		}
 
 	}
-// AbstractPacketizer
 
-	protected boolean running = true;
+	private void send(final int length) throws IOException
+    {
+		setBuffer(++seq, 2, 4);
+		mPacket.setLength(length);
+		mSocket.send(mPacket);
 
-    protected static String printBuffer(byte[] buffer, int start,int end) {
-    	String str = "";
-    	for (int i=start;i<end;i++) str+=","+Integer.toHexString(buffer[i]&0xFF);
-    	return str;
-    }
-// RTP socket
-	private MulticastSocket usock;
-	private DatagramPacket upack;
-
-	private byte[] buffer = new byte[MTU];
-	private int seq = 0;
-	private boolean upts = false;
-	private int ssrc;
-	private int port = -1;
-
-	public static final int RTP_HEADER_LENGTH = 12;
-	protected static final int rtphl = RTP_HEADER_LENGTH;
-	public static final int MTU = 1500;
-
-	public void initSocket() throws IOException {
-
-		/*							     Version(2)  Padding(0)					 					*/
-		/*									 ^		  ^			Extension(0)						*/
-		/*									 |		  |				^								*/
-		/*									 | --------				|								*/
-		/*									 | |---------------------								*/
-		/*									 | ||  -----------------------> Source Identifier(0)	*/
-		/*									 | ||  |												*/
-		buffer[0] = (byte) Integer.parseInt("10000000",2);
-
-		/* Payload Type */
-		buffer[1] = (byte) 96;
-
-		/* Byte 2,3        ->  Sequence Number                   */
-		/* Byte 4,5,6,7    ->  Timestamp                         */
-		/* Byte 8,9,10,11  ->  Sync Source Identifier            */
-		setLong((ssrc=(new Random()).nextInt()),8,12);
-
-		usock = new MulticastSocket();
-		upack = new DatagramPacket(buffer, 1);
-
-	}
-
-	public void close() {
-		usock.close();
-	}
-
-	public void setSSRC(int ssrc) {
-		this.ssrc = ssrc;
-		setLong(ssrc,8,12);
-	}
-
-	public int getSSRC() {
-		return ssrc;
-	}
-
-	public void setTimeToLive(int ttl) throws IOException {
-		usock.setTimeToLive(ttl);
-	}
-
-	public void setDestination(InetAddress dest, int dport) {
-		port = dport;
-		upack.setPort(dport);
-		upack.setAddress(dest);
-	}
-
-	public byte[] getBuffer() {
-		return buffer;
-	}
-
-	public int getPort() {
-		return port;
-	}
-
-	public int getLocalPort() {
-		return usock.getLocalPort();
-	}
-
-	/* Send RTP packet over the network */
-	public void send(int length) throws IOException {
-
-		updateSequence();
-		upack.setLength(length);
-		usock.send(upack);
-
-		if (upts) {
+		if (upts)
+        {
 			upts = false;
-			buffer[1] -= 0x80;
+			mBuffer[1] -= 0x80;
 		}
+	} // send(int)
 
-	}
-
-	private void updateSequence() {
-		setLong(++seq, 2, 4);
-	}
-
-	public void updateTimestamp(long timestamp) {
-		setLong(timestamp, 4, 8);
-	}
-
-	public void markNextPacket() {
+	private void markNextPacket() {
 		upts = true;
-		buffer[1] += 0x80; // Mark next packet
+		mBuffer[1] += 0x80; // Mark next packet
 	}
 
-	private void setLong(long n, int begin, int end) {
-		for (end--; end >= begin; end--) {
-			buffer[end] = (byte) (n % 256);
-			n >>= 8;
-		}
-	}
+	private void setBuffer(long bytes, final int start, int end)
+    {
+		for (end--; end >= start; end--)
+        {
+			mBuffer[end] = (byte) (bytes % 256);
+			bytes >>= 8;
+		} // for
+	} // setBuffer(long, int, int)
+
 
 } // class RtpStreamer
 
