@@ -95,11 +95,11 @@ import android.util.Log;
 
         // H263+ Header
 		// Each packet we send has a two byte long header (See section 5.1 of RFC 4629)
-		mBuffer[RTP_HEADER_LENGTH] = 0;
-		mBuffer[RTP_HEADER_LENGTH+1] = 0;
+		mBuffer[H263_HEADER_OFFSET] = 0x00;
+		mBuffer[H263_HEADER_OFFSET + 1] = 0x00;
 
 		mSocket = new MulticastSocket();
-		mPacket = new DatagramPacket(mBuffer, 1);
+		mPacket = new DatagramPacket(mBuffer, 0);
         mPacket.setAddress(InetAddress.getByName(HOST_NAME));
         mPacket.setPort(HOST_PORT);
 
@@ -123,7 +123,7 @@ import android.util.Log;
 	private void streamLoop() throws IOException
     {
         long duration = 0;
-        long ts = 0;
+        long timestamp = 0;
 		boolean firstFragment = true;
 
         int payloadLength = 0;
@@ -153,13 +153,14 @@ import android.util.Log;
             {
                 // We have found the end of the frame
                 stats.push(duration);
-                ts+= stats.average(); duration = 0;
+                timestamp += stats.average();
+                duration = 0;
                 // The last fragment of a frame has to be marked
                 markNextPacket();
                 send(pictureStart);
-                setBuffer(ts * 90, 4, 8); // Update timestamp
-                System.arraycopy(mBuffer,pictureStart + 2, mBuffer, H263_PAYLOAD_OFFSET, MTU - pictureStart - 2);
-                payloadLength = MTU - pictureStart - 2;
+                setBuffer(timestamp * 90, 4, 8); // Update timestamp
+                System.arraycopy(mBuffer, pictureStart + 2, mBuffer, H263_PAYLOAD_OFFSET, MTU - pictureStart - 2);
+                payloadLength = MTU - pictureStart - H263_HEADER_LENGTH;
                 firstFragment = true;
             } // if
             else
