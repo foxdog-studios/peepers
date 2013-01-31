@@ -111,12 +111,18 @@ import android.util.Log;
     {
         final byte[] mdat = { 'm', 'd', 'a', 't' };
         final byte[] buffer = new byte[mdat.length];
+
 		do
         {
             int length = mdat.length;
             while (length > 0)
             {
-                length -= mVideoStream.read(buffer, mdat.length - length, length);
+                final int bytesRead = mVideoStream.read(buffer, mdat.length - length, length);
+                if (bytesRead == -1)
+                {
+                    throw new IOException("Video stream ended before mdata data");
+                } // if
+                length -= bytesRead;
             } // while
 		} while (!Arrays.equals(buffer, mdat));
 	} // skipToMdatData()
@@ -145,7 +151,7 @@ import android.util.Log;
 
             // Fill the RTP payload
             final long beforeFill = SystemClock.elapsedRealtime();
-            payloadLength = fillBuffer(payloadLength);
+            payloadLength = fillH263Payload(payloadLength);
             duration += SystemClock.elapsedRealtime() - beforeFill;
 
             final int pictureStart = findPictureStartInH263Payload();
@@ -174,24 +180,22 @@ import android.util.Log;
         } // while
 	} // streamLoop()
 
-	private int fillBuffer(final int payloadLength) throws IOException
+	private int fillH263Payload(final int payloadLength) throws IOException
     {
-        int offset = H263_PAYLOAD_OFFSET + payloadLength;
         int length = MTU - H263_PAYLOAD_OFFSET - payloadLength;
 
 		while (length > 0)
         {
-			final int bytesRead = mVideoStream.read(mBuffer, offset, length);
+			final int bytesRead = mVideoStream.read(mBuffer, MTU - length, length);
 			if (bytesRead == -1)
             {
 				throw new IOException("Video stream ended");
 			} // if
-            offset += bytesRead;
             length -= bytesRead;
 		} // while
 
         return MTU - H263_PAYLOAD_OFFSET;
-	} // fillBuffer(int)
+	} // fillH263Payload(int)
 
     private int findPictureStartInH263Payload()
     {
