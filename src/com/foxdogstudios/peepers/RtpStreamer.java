@@ -127,50 +127,59 @@ import android.util.Log;
         long duration = 0;
         long ts = 0;
 		int i = 0;
-        int j = 0;
+        int pictureStart = 0;
 		boolean firstFragment = true;
 
         while (mIsRunning)
         {
-            time = SystemClock.elapsedRealtime();
-            fill(RTP_HEADER_LENGTH + j + 2, MAXPACKETSIZE - RTP_HEADER_LENGTH - j - 2);
-            duration += SystemClock.elapsedRealtime() - time;
-            j = 0;
+            // Fill the RTP payload
+            final long beforeFill = SystemClock.elapsedRealtime();
+            fill(RTP_HEADER_LENGTH + pictureStart + 2, MAXPACKETSIZE - RTP_HEADER_LENGTH - pictureStart - 2);
+            duration += SystemClock.elapsedRealtime() - beforeFill;
+
+            pictureStart = 0;
             // Each h263 frame starts with: 0000 0000 0000 0000 1000 00??
             // Here we search where the next frame begins in the bit stream
             for (i=RTP_HEADER_LENGTH+2;i<MAXPACKETSIZE-1;i++) {
                 if (mBuffer[i]==0 && mBuffer[i+1]==0 && (mBuffer[i+2]&0xFC)==0x80) {
-                    j=i;
+                    pictureStart=i;
                     break;
                 }
             }
-            if (firstFragment) {
+
+            if (firstFragment)
+            {
                 // This is the first fragment of the frame -> header is set to 0x0400
                 mBuffer[RTP_HEADER_LENGTH] = 4;
                 firstFragment = false;
-            } else {
+            }
+            else
+            {
                 mBuffer[RTP_HEADER_LENGTH] = 0;
             }
-            if (j>0) {
+
+            // XXX: pictureStart is a bit of a lie
+            if (pictureStart>0)
+            {
                 // We have found the end of the frame
                 stats.push(duration);
                 ts+= stats.average(); duration = 0;
-                //Log.d(TAG,"End of frame ! duration: "+stats.average());
                 // The last fragment of a frame has to be marked
                 markNextPacket();
-                send(j);
+                send(pictureStart);
                 setBuffer(ts * 90, 4, 8); // Update timestamp
-                System.arraycopy(mBuffer,j+2,mBuffer,RTP_HEADER_LENGTH+2,MAXPACKETSIZE-j-2);
-                j = MAXPACKETSIZE-j-2;
+                System.arraycopy(mBuffer,pictureStart+2,mBuffer,RTP_HEADER_LENGTH+2,MAXPACKETSIZE-pictureStart-2);
+                pictureStart = MAXPACKETSIZE-pictureStart-2;
                 firstFragment = true;
-            } else {
+            } // if
+            else
+            {
                 // We have not found the beginning of another frame
                 // The whole packet is a fragment of a frame
                 send(MAXPACKETSIZE);
-            }
-        }
-
-	}
+            } // else
+        } // while
+	} // streamLoop()
 
 	private void fill(final int offset, final int length) throws IOException
     {
