@@ -124,28 +124,29 @@ import android.util.Log;
     {
         long duration = 0;
         long timestamp = 0;
-		boolean firstFragment = true;
+		boolean isPictureStart = true;
 
         int payloadLength = 0;
 
         while (mIsRunning)
         {
-            // Fill the RTP payload
-            final long beforeFill = SystemClock.elapsedRealtime();
-            fill(H263_PAYLOAD_OFFSET + payloadLength, MTU - H263_PAYLOAD_OFFSET - payloadLength);
-            duration += SystemClock.elapsedRealtime() - beforeFill;
-
-
-            if (firstFragment)
+            // Set/unset the P bit in the H263+ payload header
+            if (isPictureStart)
             {
                 // This is the first fragment of the frame -> header is set to 0x0400
-                mBuffer[RTP_HEADER_LENGTH] = 0x04;
-                firstFragment = false;
-            }
+                mBuffer[H263_HEADER_OFFSET] = 0x04;
+                isPictureStart = false;
+            } // if
             else
             {
-                mBuffer[RTP_HEADER_LENGTH] = 0x00;
-            }
+                mBuffer[H263_HEADER_OFFSET] = 0x00;
+            } // else
+
+            // Fill the RTP payload
+            final long beforeFill = SystemClock.elapsedRealtime();
+            fillBuffer(payloadLength);
+            duration += SystemClock.elapsedRealtime() - beforeFill;
+
 
             final int pictureStart = findPictureStartInH263Payload();
 
@@ -155,13 +156,13 @@ import android.util.Log;
                 stats.push(duration);
                 timestamp += stats.average();
                 duration = 0;
+
                 // The last fragment of a frame has to be marked
                 markNextPacket();
                 send(pictureStart);
                 setBuffer(timestamp * 90, 4, 8); // Update timestamp
-                System.arraycopy(mBuffer, pictureStart + 2, mBuffer, H263_PAYLOAD_OFFSET, MTU - pictureStart - 2);
-                payloadLength = MTU - pictureStart - H263_HEADER_LENGTH;
-                firstFragment = true;
+                payloadLength = shiftPictureStartToH263PayloadOffset(pictureStart);
+                isPictureStart = true;
             } // if
             else
             {
@@ -173,20 +174,22 @@ import android.util.Log;
         } // while
 	} // streamLoop()
 
-	private void fill(final int offset, final int length) throws IOException
+	private void fillBuffer(final int payloadLength) throws IOException
     {
-		int totalBytesRead = 0;
-		while (totalBytesRead < length)
+        int offset = H263_PAYLOAD_OFFSET + payloadLength;
+        int length = MTU - H263_PAYLOAD_OFFSET - payloadLength;
+
+		while (length > 0)
         {
-			final int bytesRead = mVideoStream.read(mBuffer, offset + totalBytesRead,
-                    length - totalBytesRead);
+			final int bytesRead = mVideoStream.read(mBuffer, offset, length);
 			if (bytesRead == -1)
             {
 				throw new IOException("Video stream ended");
 			} // if
-			totalBytesRead += bytesRead;
+            offset += bytesRead;
+            length -= bytesRead;
 		} // while
-	} // fill(int, int)
+	} // fillBuffer(int)
 
     private int findPictureStartInH263Payload()
     {
@@ -201,6 +204,16 @@ import android.util.Log;
         } // for
         return -1;
     } // findPictureStartInH263Payload()
+
+    private int shiftPictureStartToH263PayloadOffset(final int pictureStart)
+    {
+        final int IMPLIED_PICTURE_START_BYTES = 2;
+        final int srcPos = pictureStart + IMPLIED_PICTURE_START_BYTES;
+        // After the copy, length is also the payloadLength;
+        final int length = MTU - pictureStart - IMPLIED_PICTURE_START_BYTES;
+        System.arraycopy(mBuffer, srcPos, mBuffer, H263_PAYLOAD_OFFSET, length);
+        return length;
+    } // shiftPictureStartToH263PayloadOffset(int)
 
 	private static class Statistics {
 
