@@ -99,8 +99,8 @@ import android.util.Log;
 
         // H263+ Header
 		// Each packet we send has a two byte long header (See section 5.1 of RFC 4629)
-		mBuffer[rtphl] = 0;
-		mBuffer[rtphl+1] = 0;
+		mBuffer[RTP_HEADER_LENGTH] = 0;
+		mBuffer[RTP_HEADER_LENGTH+1] = 0;
 
 		mSocket = new MulticastSocket();
 		mPacket = new DatagramPacket(mBuffer, 1);
@@ -136,12 +136,12 @@ import android.util.Log;
         while (mIsRunning)
         {
             time = SystemClock.elapsedRealtime();
-            fill(rtphl + j + 2, MAXPACKETSIZE - rtphl - j - 2);
+            fill(RTP_HEADER_LENGTH + j + 2, MAXPACKETSIZE - RTP_HEADER_LENGTH - j - 2);
             duration += SystemClock.elapsedRealtime() - time;
             j = 0;
             // Each h263 frame starts with: 0000 0000 0000 0000 1000 00??
             // Here we search where the next frame begins in the bit stream
-            for (i=rtphl+2;i<MAXPACKETSIZE-1;i++) {
+            for (i=RTP_HEADER_LENGTH+2;i<MAXPACKETSIZE-1;i++) {
                 if (mBuffer[i]==0 && mBuffer[i+1]==0 && (mBuffer[i+2]&0xFC)==0x80) {
                     j=i;
                     break;
@@ -149,10 +149,10 @@ import android.util.Log;
             }
             if (firstFragment) {
                 // This is the first fragment of the frame -> header is set to 0x0400
-                mBuffer[rtphl] = 4;
+                mBuffer[RTP_HEADER_LENGTH] = 4;
                 firstFragment = false;
             } else {
-                mBuffer[rtphl] = 0;
+                mBuffer[RTP_HEADER_LENGTH] = 0;
             }
             if (j>0) {
                 // We have found the end of the frame
@@ -163,7 +163,7 @@ import android.util.Log;
                 markNextPacket();
                 send(j);
                 setBuffer(ts * 90, 4, 8); // Update timestamp
-                System.arraycopy(mBuffer,j+2,mBuffer,rtphl+2,MAXPACKETSIZE-j-2);
+                System.arraycopy(mBuffer,j+2,mBuffer,RTP_HEADER_LENGTH+2,MAXPACKETSIZE-j-2);
                 j = MAXPACKETSIZE-j-2;
                 firstFragment = true;
             } else {
