@@ -19,29 +19,26 @@ import android.util.Log;
     private static final String HOST_NAME = "kilburn";
     // First unprivileged UDP port
     private static final int HOST_PORT = 1024;
-
     private static final int H263_HEADER_OFFSET = 12;
     private static final int H263_FRAME_START_LENGTH = 2;
     private static final int H263_PAYLOAD_OFFSET = H263_HEADER_OFFSET + H263_FRAME_START_LENGTH;
-
 	private static final int MAXPACKETSIZE = 1400;
 	private static final int RTP_HEADER_LENGTH = 12;
-	private static final int rtphl = RTP_HEADER_LENGTH;
 	private static final int MTU = 1500;
 
-    private final InputStream mVideoStream;
     private final byte[] mBuffer = new byte[MTU];
+
+    private final InputStream mVideoStream;
+	private final Statistics stats = new Statistics();
+
     private int mBufferEnd = 0;
     private int mSequenceNumber = Integer.MIN_VALUE;
     private Thread mStreamerThread = null;
 	private MulticastSocket mSocket;
 	private DatagramPacket mPacket;
-
 	private int seq = 0;
 	private boolean upts = false;
-	private int ssrc;
 
-	private Statistics stats = new Statistics();
     private volatile boolean mIsRunning = false;
 
     /* package */ RtpStreamer(final InputStream videoStream)
@@ -95,7 +92,7 @@ import android.util.Log;
 		// Byte 2,3        ->  Sequence Number
 		// Byte 4,5,6,7    ->  Timestamp
 		// Byte 8,9,10,11  ->  Sync Source Identifier
-		setBuffer((ssrc=(new Random()).nextInt()),8,12);
+		setBuffer(new Random().nextInt(), 8, 12);
 
         // H263+ Header
 		// Each packet we send has a two byte long header (See section 5.1 of RFC 4629)
