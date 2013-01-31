@@ -19,12 +19,12 @@ import android.util.Log;
     private static final String HOST_NAME = "kilburn";
     // First unprivileged UDP port
     private static final int HOST_PORT = 1024;
-    private static final int H263_HEADER_OFFSET = 12;
-    private static final int H263_FRAME_START_LENGTH = 2;
-    private static final int H263_PAYLOAD_OFFSET = H263_HEADER_OFFSET + H263_FRAME_START_LENGTH;
-	private static final int MAXPACKETSIZE = 1400;
+
+	private static final int MTU = 1400;
 	private static final int RTP_HEADER_LENGTH = 12;
-	private static final int MTU = 1500;
+    private static final int H263_HEADER_OFFSET = RTP_HEADER_LENGTH;
+    private static final int H263_HEADER_LENGTH = 2;
+    private static final int H263_PAYLOAD_OFFSET = H263_HEADER_OFFSET + H263_HEADER_LENGTH;
 
     private final byte[] mBuffer = new byte[MTU];
 
@@ -32,11 +32,10 @@ import android.util.Log;
 	private final Statistics stats = new Statistics();
 
     private int mBufferEnd = 0;
-    private int mSequenceNumber = Integer.MIN_VALUE;
     private Thread mStreamerThread = null;
-	private MulticastSocket mSocket;
-	private DatagramPacket mPacket;
-	private int seq = 0;
+	private MulticastSocket mSocket = null;
+	private DatagramPacket mPacket = null;
+    private int mSequenceNumber = Integer.MIN_VALUE;
 	private boolean upts = false;
 
     private volatile boolean mIsRunning = false;
@@ -123,43 +122,34 @@ import android.util.Log;
 
 	private void streamLoop() throws IOException
     {
-		long time;
         long duration = 0;
         long ts = 0;
-		int i = 0;
-        int pictureStart = 0;
 		boolean firstFragment = true;
+
+        int payloadLength = 0;
 
         while (mIsRunning)
         {
             // Fill the RTP payload
             final long beforeFill = SystemClock.elapsedRealtime();
-            fill(RTP_HEADER_LENGTH + pictureStart + 2, MAXPACKETSIZE - RTP_HEADER_LENGTH - pictureStart - 2);
+            fill(H263_PAYLOAD_OFFSET + payloadLength, MTU - H263_PAYLOAD_OFFSET - payloadLength);
             duration += SystemClock.elapsedRealtime() - beforeFill;
 
-            pictureStart = 0;
-            // Each h263 frame starts with: 0000 0000 0000 0000 1000 00??
-            // Here we search where the next frame begins in the bit stream
-            for (i=RTP_HEADER_LENGTH+2;i<MAXPACKETSIZE-1;i++) {
-                if (mBuffer[i]==0 && mBuffer[i+1]==0 && (mBuffer[i+2]&0xFC)==0x80) {
-                    pictureStart=i;
-                    break;
-                }
-            }
 
             if (firstFragment)
             {
                 // This is the first fragment of the frame -> header is set to 0x0400
-                mBuffer[RTP_HEADER_LENGTH] = 4;
+                mBuffer[RTP_HEADER_LENGTH] = 0x04;
                 firstFragment = false;
             }
             else
             {
-                mBuffer[RTP_HEADER_LENGTH] = 0;
+                mBuffer[RTP_HEADER_LENGTH] = 0x00;
             }
 
-            // XXX: pictureStart is a bit of a lie
-            if (pictureStart>0)
+            final int pictureStart = findPictureStartInH263Payload();
+
+            if (pictureStart != -1)
             {
                 // We have found the end of the frame
                 stats.push(duration);
@@ -168,15 +158,16 @@ import android.util.Log;
                 markNextPacket();
                 send(pictureStart);
                 setBuffer(ts * 90, 4, 8); // Update timestamp
-                System.arraycopy(mBuffer,pictureStart+2,mBuffer,RTP_HEADER_LENGTH+2,MAXPACKETSIZE-pictureStart-2);
-                pictureStart = MAXPACKETSIZE-pictureStart-2;
+                System.arraycopy(mBuffer,pictureStart + 2, mBuffer, H263_PAYLOAD_OFFSET, MTU - pictureStart - 2);
+                payloadLength = MTU - pictureStart - 2;
                 firstFragment = true;
             } // if
             else
             {
                 // We have not found the beginning of another frame
                 // The whole packet is a fragment of a frame
-                send(MAXPACKETSIZE);
+                send(MTU);
+                payloadLength = 0;
             } // else
         } // while
 	} // streamLoop()
@@ -196,6 +187,20 @@ import android.util.Log;
 		} // while
 	} // fill(int, int)
 
+    private int findPictureStartInH263Payload()
+    {
+        // Each h263 frame starts with: 0000 0000 0000 0000 1000 00??
+        // Here we search where the next frame begins in the bit stream
+        for (int i = H263_PAYLOAD_OFFSET; i < MTU - 2; i++)
+        {
+            if (mBuffer[i] == 0 && mBuffer[i + 1] == 0 && (mBuffer[i + 2] & 0xfc) == 0x80)
+            {
+                return i;
+            } // if
+        } // for
+        return -1;
+    } // findPictureStartInH263Payload()
+
 	private static class Statistics {
 
 		public final static int COUNT=50;
@@ -214,7 +219,7 @@ import android.util.Log;
 
 	private void send(final int length) throws IOException
     {
-		setBuffer(++seq, 2, 4);
+		setBuffer(++mSequenceNumber, 2, 4);
 		mPacket.setLength(length);
 		mSocket.send(mPacket);
 
