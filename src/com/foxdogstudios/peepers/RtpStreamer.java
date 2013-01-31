@@ -114,18 +114,23 @@ import android.util.Log;
 
 		do
         {
-            int length = mdat.length;
-            while (length > 0)
-            {
-                final int bytesRead = mVideoStream.read(buffer, mdat.length - length, length);
-                if (bytesRead == -1)
-                {
-                    throw new IOException("Video stream ended before mdata data");
-                } // if
-                length -= bytesRead;
-            } // while
+            fillBuffer(buffer, 0 /* offset */);
 		} while (!Arrays.equals(buffer, mdat));
 	} // skipToMdatData()
+
+    private void fillBuffer(final byte[] buffer, final int offset) throws IOException
+    {
+        int length = buffer.length - offset;
+        while (length > 0)
+        {
+            final int bytesRead = mVideoStream.read(buffer, buffer.length - length, length);
+            if (bytesRead == -1)
+            {
+                throw new IOException("Video stream ended");
+            } // if
+            length -= bytesRead;
+        } // while
+    } // fillBuffer(byte[], int)
 
 	private void streamLoop() throws IOException
     {
@@ -182,18 +187,7 @@ import android.util.Log;
 
 	private int fillH263Payload(final int payloadLength) throws IOException
     {
-        int length = MTU - H263_PAYLOAD_OFFSET - payloadLength;
-
-		while (length > 0)
-        {
-			final int bytesRead = mVideoStream.read(mBuffer, MTU - length, length);
-			if (bytesRead == -1)
-            {
-				throw new IOException("Video stream ended");
-			} // if
-            length -= bytesRead;
-		} // while
-
+        fillBuffer(mBuffer, H263_PAYLOAD_OFFSET + payloadLength);
         return MTU - H263_PAYLOAD_OFFSET;
 	} // fillH263Payload(int)
 
