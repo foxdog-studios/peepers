@@ -26,18 +26,15 @@ import android.util.Log;
     private static final int H263_HEADER_LENGTH = 2;
     private static final int H263_PAYLOAD_OFFSET = H263_HEADER_OFFSET + H263_HEADER_LENGTH;
 
-    private static final int MAX_Q = 50;
-
     private final byte[] mBuffer = new byte[MTU];
-
     private final InputStream mVideoStream;
-
     private int mBufferEnd = 0;
     private Thread mStreamerThread = null;
 	private MulticastSocket mSocket = null;
 	private DatagramPacket mPacket = null;
     private int mSequenceNumber = Integer.MIN_VALUE;
 
+    private static final int MAX_Q = 500;
     private double mMeanPictureDuration = 0.0;
     private int mQ = 0;
 
