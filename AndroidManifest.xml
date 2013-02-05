@@ -2,18 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.foxdogstudios.peepers"
           android:versionCode="1"
-          android:versionName="1.0" >
+          android:versionName="1.0">
 
     <uses-sdk android:minSdkVersion="10"
               android:targetSdkVersion="10" />
 
- 	<uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application android:label="@string/app_name"
-                 android:allowBackup="true">
-        <activity android:name="VideoStreamerActivity"
+                 android:allowBackup="true"
+                 android:name="PeepersApplication">
+        <activity android:name="ImageStreamerActivity"
                   android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
