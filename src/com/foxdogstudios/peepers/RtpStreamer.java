@@ -25,7 +25,13 @@ import android.util.Log;
     private static final int H263_HEADER_LENGTH = 2;
     private static final int H263_PAYLOAD_OFFSET = H263_HEADER_OFFSET + H263_HEADER_LENGTH;
 
-    private final byte[] mBuffer = new byte[MTU];
+    // Pictures start codes occupy 3 bytes. To ensure that we don't miss
+    // one, we read 2 more bytes than we're going to send. These bytes
+    // are shifted into the H263 payload after the packet has bee sent,
+    // so they're not lost.
+    private final byte[] mBuffer = new byte[MTU + 2];
+    private int mBufferEnd = 0;
+
     private final InputStream mVideoStream;
     private Thread mStreamerThread = null;
 	private MulticastSocket mSocket = null;
@@ -110,6 +116,8 @@ import android.util.Log;
 		mBuffer[H263_HEADER_OFFSET] = 0x00;
 		mBuffer[H263_HEADER_OFFSET + 1] = 0x00;
 
+        mBufferEnd = H263_PAYLOAD_OFFSET;
+
         skipToMdatData();
         streamLoop();
 	} // stream()
@@ -127,31 +135,31 @@ import android.util.Log;
     {
         final byte[] mdat = { 'm', 'd', 'a', 't' };
         final byte[] buffer = new byte[mdat.length];
-
 		do
         {
             fillBuffer(buffer, 0 /* offset */);
 		} while (!Arrays.equals(buffer, mdat));
 	} // skipToMdatData()
 
-    private void fillBuffer(final byte[] buffer, final int offset) throws IOException
+    private int fillBuffer(final byte[] buffer, final int offset) throws IOException
     {
-        int length = buffer.length - offset;
-        while (length > 0)
+        final int length = buffer.length - offset;
+        int remaining = length;
+        while (remaining > 0)
         {
-            final int bytesRead = mVideoStream.read(buffer, buffer.length - length, length);
+            final int bytesRead = mVideoStream.read(buffer, buffer.length - remaining, remaining);
             if (bytesRead == -1)
             {
                 throw new IOException("Video stream ended");
             } // if
-            length -= bytesRead;
+            remaining -= bytesRead;
         } // while
+        return length;
     } // fillBuffer(byte[], int)
 
 	private void streamLoop() throws IOException
     {
 		boolean isPictureStart = true;
-        int payloadLength = 0;
         long pictureDuration = 0L;
         long timestamp = 0L;
 
@@ -171,7 +179,7 @@ import android.util.Log;
 
             // Fill the H263+ payload
             final long beforeFill = SystemClock.elapsedRealtime();
-            payloadLength = fillH263Payload(payloadLength);
+            mBufferEnd += fillBuffer(mBuffer, mBufferEnd);
             pictureDuration += SystemClock.elapsedRealtime() - beforeFill;
 
             final int pictureStart = findPictureStartInH263Payload();
@@ -184,36 +192,27 @@ import android.util.Log;
                 send(pictureStart);
 			    mBuffer[1] -= 0x80;
 
-                payloadLength = shiftPictureStartToH263PayloadOffset(pictureStart);
-                isPictureStart = true;
-
-                // The next packet starts a new picture, so update the
-                // timestamp.
-                // XXX: What's going on here?
                 updateMeanPictureDuration(pictureDuration);
-                pictureDuration = 0L;
                 timestamp += mMeanPictureDuration;
+                pictureDuration = 0;
                 setBuffer(timestamp * 90, 4, 8);
 
+                final int IMPLIED_PICTURE_START_BYTES = 2;
+                shiftToH263PayloadOffset(pictureStart + IMPLIED_PICTURE_START_BYTES);
+                isPictureStart = true;
             } // if
             else
             {
                 send(MTU);
-                payloadLength = 0;
+                shiftToH263PayloadOffset(MTU);
             } // else
         } // while
 	} // streamLoop()
 
-	private int fillH263Payload(final int payloadLength) throws IOException
-    {
-        fillBuffer(mBuffer, H263_PAYLOAD_OFFSET + payloadLength);
-        return MTU - H263_PAYLOAD_OFFSET;
-	} // fillH263Payload(int)
-
     private int findPictureStartInH263Payload()
     {
         // H263+ pictures start with 0000 0000 0000 0000 1000 00??
-        for (int i = H263_PAYLOAD_OFFSET; i < MTU - 2; i++)
+        for (int i = H263_PAYLOAD_OFFSET; i < MTU; i++)
         {
             if (mBuffer[i] == 0 && mBuffer[i + 1] == 0 && (mBuffer[i + 2] & 0xfc) == 0x80)
             {
@@ -240,15 +239,13 @@ import android.util.Log;
 		mSocket.send(mPacket);
 	} // send(int)
 
-    private int shiftPictureStartToH263PayloadOffset(final int pictureStart)
+    private void shiftToH263PayloadOffset(final int start)
     {
-        final int IMPLIED_PICTURE_START_BYTES = 2;
-        final int srcPos = pictureStart + IMPLIED_PICTURE_START_BYTES;
-        // After the copy, length is also the payloadLength;
-        final int length = MTU - pictureStart - IMPLIED_PICTURE_START_BYTES;
-        System.arraycopy(mBuffer, srcPos, mBuffer, H263_PAYLOAD_OFFSET, length);
-        return length;
-    } // shiftPictureStartToH263PayloadOffset(int)
+        // After the copy, length is also the payloadLength
+        final int length = mBuffer.length - start;
+        System.arraycopy(mBuffer, start, mBuffer, H263_PAYLOAD_OFFSET, length);
+        mBufferEnd = H263_PAYLOAD_OFFSET + length;
+    } // shiftToH263PayloadOffset(int)
 
 
 } // class RtpStreamer
