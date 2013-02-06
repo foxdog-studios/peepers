@@ -27,6 +27,8 @@ import android.view.SurfaceHolder;
     private int mPreviewWidth = Integer.MIN_VALUE;
     private int mPreviewHeight = Integer.MIN_VALUE;
     private Rect mPreviewRect = null;
+    private int mPreviewBufferSize = Integer.MIN_VALUE;
+    private MemoryOutputStream mJpegOutputStream = null;
 
     /* package */ ImageStreamer(final SurfaceHolder previewDisplay)
     {
@@ -118,7 +120,7 @@ import android.view.SurfaceHolder;
         // by another application.
         final Camera camera = Camera.open();
 
-        // Set up callback buffers
+        // Set up callback buffer
         final Camera.Parameters params = camera.getParameters();
         mPreviewFormat = params.getPreviewFormat();
         final Camera.Size previewSize = params.getPreviewSize();
@@ -130,14 +132,14 @@ import android.view.SurfaceHolder;
         // calculated by width * height * bytesPerPixel. However, this
         // returned an error saying it was too small. It always needed
         // to be exactly 1.5 times larger.
-        final int bufferSize = mPreviewWidth * mPreviewHeight * bytesPerPixel * 3 / 2 + 1;
-        final int NUM_BUFFERS = 10;
-        for (int bufferIndex = 0; bufferIndex < NUM_BUFFERS; bufferIndex++)
-        {
-            camera.addCallbackBuffer(new byte[bufferSize]);
-        } // for
+        mPreviewBufferSize = mPreviewWidth * mPreviewHeight * bytesPerPixel * 3 / 2 + 1;
+        camera.addCallbackBuffer(new byte[mPreviewBufferSize]);
         mPreviewRect = new Rect(0, 0, mPreviewWidth, mPreviewHeight);
         camera.setPreviewCallbackWithBuffer(mPreviewCallback);
+
+        // We assumed that the compressed image will be no bigger than
+        // the uncompressed image.
+        mJpegOutputStream = new MemoryOutputStream(mPreviewBufferSize);
 
         synchronized (mLock)
         {
@@ -189,10 +191,9 @@ import android.view.SurfaceHolder;
 
             final YuvImage image = new YuvImage(data, mPreviewFormat, mPreviewWidth, mPreviewHeight,
                     null /* strides */);
-            image.compressToJpeg(mPreviewRect, 100 /* quality */, new OutputStream(){
-                @Override
-                public void write(int oneByte) throws IOException {}
-            });
+            image.compressToJpeg(mPreviewRect, 100 /* quality */, mJpegOutputStream);
+            mJpegOutputStream.seek(0);
+            Log.d(TAG, "JPEG size " + mJpegOutputStream.getLength());
 
             camera.addCallbackBuffer(data);
         } // onPreviewFrame(byte[], Camera)
