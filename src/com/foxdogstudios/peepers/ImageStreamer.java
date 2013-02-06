@@ -11,6 +11,8 @@ import android.view.SurfaceHolder;
 {
     private static final String TAG = ImageStreamer.class.getSimpleName();
 
+    private static final long OPEN_CAMERA_POLL_INTERVAL_MS = 1000L;
+
     private final Object mLock = new Object();
     private final SurfaceHolder mPreviewDisplay;
 
@@ -30,6 +32,7 @@ import android.view.SurfaceHolder;
         mPreviewDisplay = previewDisplay;
     } // constructor(SurfaceHolder)
 
+    /*
     /* package */ void start()
     {
         synchronized (mLock)
@@ -48,7 +51,7 @@ import android.view.SurfaceHolder;
             {
                 try
                 {
-                    ImageStreamer.this.run();
+                    ImageStreamer.this.tryStartPreview();
                 } // try
                 catch (final Exception streamingException)
                 {
@@ -59,6 +62,11 @@ import android.view.SurfaceHolder;
         mWorker.start();
     } // start()
 
+    /**
+     *  Stop the image streamer. The camera will be released during the
+     *  execution of stop() or shortly after it returns. stop() should
+     *  be called on the main thread.
+     */
     /* package */ void stop()
     {
         synchronized (mLock)
@@ -77,11 +85,32 @@ import android.view.SurfaceHolder;
         } // synchronized
     } // stop()
 
-    private void run() throws IOException
+    private void tryStartPreview() throws Exception
+    {
+        while (true)
+        {
+            try
+            {
+                startPreview();
+            } //try
+            catch (final RuntimeException openCameraFailed)
+            {
+                Log.d(TAG, "Open camera failed, retying in " + OPEN_CAMERA_POLL_INTERVAL_MS + "ms",
+                        openCameraFailed);
+                Thread.sleep(OPEN_CAMERA_POLL_INTERVAL_MS);
+                continue;
+            } // catch
+           break;
+        } // while
+    } // tryStartPreview()
+
+    private void startPreview() throws IOException
     {
         // Throws RuntimeException if the camera is currently opened
         // by another application.
         final Camera camera = Camera.open();
+
+        // Set up callback buffers
         final Camera.Parameters params = camera.getParameters();
         final Camera.Size previewSize = params.getPreviewSize();
         final int previewFormat = params.getPreviewFormat();
@@ -90,21 +119,15 @@ import android.view.SurfaceHolder;
         // XXX: According to the documentation the buffer size can be
         // calculated by previewSize.width * previewSize.height
         // * bytesPerPixel. However, this returned an error saying it
-        // was too same. It was always needed to be exactly 1.5 times
+        // was too small. It always needed to be exactly 1.5 times
         // larger.
         final int bufferSize = previewSize.width * previewSize.height * bytesPerPixel * 3 / 2 + 1;
-        final byte[] buffer = new byte[bufferSize];
-        camera.addCallbackBuffer(buffer);
-
-        camera.setPreviewCallbackWithBuffer(new Camera.PreviewCallback()
+        final int NUM_BUFFERS = 10;
+        for (int bufferIndex = 0; bufferIndex < NUM_BUFFERS; bufferIndex++)
         {
-            @Override
-            public void onPreviewFrame(final byte[] data, final Camera camera)
-            {
-                Log.i(TAG, "onPreviewFrame called");
-                camera.addCallbackBuffer(data);
-            } // onPreviewFrame(byte[], Camera)
-        });
+            camera.addCallbackBuffer(new byte[bufferSize]);
+        } // for
+        camera.setPreviewCallbackWithBuffer(mPreviewCallback);
 
         synchronized (mLock)
         {
@@ -127,8 +150,17 @@ import android.view.SurfaceHolder;
             camera.startPreview();
             mCamera = camera;
         } // synchronized
-    } // run()
+    } // startPreview()
 
+    private final Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback()
+    {
+        @Override
+        public void onPreviewFrame(final byte[] data, final Camera camera)
+        {
+            Log.i(TAG, "onPreviewFrame called");
+            camera.addCallbackBuffer(data);
+        } // onPreviewFrame(byte[], Camera)
+    }; // mPreviewCallback
 
 } // class ImageStreamer
 
