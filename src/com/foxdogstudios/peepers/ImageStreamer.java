@@ -238,6 +238,9 @@ import android.view.SurfaceHolder;
         Log.d(TAG, "JPEG size " + mJpegOutputStream.getLength());
         mJpegOutputStream.seek(0);
 
+        // XXX: I believe that because we're not calling methods in
+        // another thread we're using Camera in a safe way. I might
+        // be wrong, the documentation is not clear.
         camera.addCallbackBuffer(data);
    } // sendPreviewFrame(byte[], camera)
 
