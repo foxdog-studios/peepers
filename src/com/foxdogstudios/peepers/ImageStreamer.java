@@ -20,7 +20,7 @@ import android.view.SurfaceHolder;
 {
     private static final String TAG = ImageStreamer.class.getSimpleName();
 
-    private static final int MESSAGE_TRY_START_PREVIEW = 0;
+    private static final int MESSAGE_TRY_START_STREAMING = 0;
     private static final int MESSAGE_SEND_PREVIEW_FRAME = 1;
 
     private static final long OPEN_CAMERA_POLL_INTERVAL_MS = 1000L;
@@ -38,6 +38,7 @@ import android.view.SurfaceHolder;
     private Rect mPreviewRect = null;
     private int mPreviewBufferSize = Integer.MIN_VALUE;
     private MemoryOutputStream mJpegOutputStream = null;
+    private MJpegRtpStreamer mMJpegRtpStreamer = null;
 
     // Frame rate data
     private long mNumFrames = 0L;
@@ -68,12 +69,12 @@ import android.view.SurfaceHolder;
         {
             switch (message.what)
             {
-                case MESSAGE_TRY_START_PREVIEW:
-                    tryStartPreview();
+                case MESSAGE_TRY_START_STREAMING:
+                    tryStartStreaming();
                     break;
                 case MESSAGE_SEND_PREVIEW_FRAME:
                     final Object[] args = (Object[]) message.obj;
-                    sendPreviewFrame((byte[]) args[0], (Camera) args[1]);
+                    sendPreviewFrame((byte[]) args[0], (Camera) args[1], (Long) args[2]);
                     break;
                 default:
                     throw new IllegalArgumentException("cannot handle message");
@@ -97,7 +98,7 @@ import android.view.SurfaceHolder;
         worker.start();
         mLooper = worker.getLooper();
         mWorkHandler = new WorkHandler(mLooper);
-        mWorkHandler.obtainMessage(MESSAGE_TRY_START_PREVIEW).sendToTarget();
+        mWorkHandler.obtainMessage(MESSAGE_TRY_START_STREAMING).sendToTarget();
     } // start()
 
     /**
@@ -115,6 +116,10 @@ import android.view.SurfaceHolder;
             } // if
 
             mRunning = false;
+            if (mMJpegRtpStreamer != null)
+            {
+                mMJpegRtpStreamer.close();
+            } // if
             if (mCamera != null)
             {
                 mCamera.release();
@@ -124,7 +129,7 @@ import android.view.SurfaceHolder;
         mLooper.quit();
     } // stop()
 
-    private void tryStartPreview()
+    private void tryStartStreaming()
     {
         try
         {
@@ -132,7 +137,7 @@ import android.view.SurfaceHolder;
             {
                 try
                 {
-                    startPreviewIfRunning();
+                    startStreamingIfRunning();
                 } //try
                 catch (final RuntimeException openCameraFailed)
                 {
@@ -146,14 +151,16 @@ import android.view.SurfaceHolder;
         } // try
         catch (final Exception startPreviewFailed)
         {
-            // Captures the IOException from startPreviewIfRunning and
+            // Captures the IOException from startStreamingIfRunning and
             // the InterruptException from Thread.sleep.
             Log.w(TAG, "Failed to start camera preview", startPreviewFailed);
         } // catch
-    } // tryStartPreview()
+    } // tryStartStreaming()
 
-    private void startPreviewIfRunning() throws IOException
+    private void startStreamingIfRunning() throws IOException
     {
+        final MJpegRtpStreamer streamer = new MJpegRtpStreamer();
+
         // Throws RuntimeException if the camera is currently opened
         // by another application.
         final Camera camera = Camera.open();
@@ -183,9 +190,12 @@ import android.view.SurfaceHolder;
         {
             if (!mRunning)
             {
+                streamer.close();
                 camera.release();
                 return;
             } // if
+
+            mMJpegRtpStreamer = streamer;
 
             try
             {
@@ -200,49 +210,53 @@ import android.view.SurfaceHolder;
             camera.startPreview();
             mCamera = camera;
         } // synchronized
-    } // startPreviewIfRunning()
+    } // startStreamingIfRunning()
 
     private final Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback()
     {
         @Override
         public void onPreviewFrame(final byte[] data, final Camera camera)
         {
+            final Long timestamp = SystemClock.elapsedRealtime();
             final Message message = mWorkHandler.obtainMessage();
             message.what = MESSAGE_SEND_PREVIEW_FRAME;
-            message.obj = new Object[]{ data, camera };
+            message.obj = new Object[]{ data, camera, timestamp };
             message.sendToTarget();
         } // onPreviewFrame(byte[], Camera)
     }; // mPreviewCallback
 
-   private void sendPreviewFrame(final byte[] data, final Camera camera)
+   private void sendPreviewFrame(final byte[] data, final Camera camera, final long timestamp)
    {
         // Calculate and log the number of preview fames frames per
         // second
         mNumFrames++;
         final long MILLI_PER_SECOND = 1000L;
+        final long timestampSeconds = timestamp / MILLI_PER_SECOND;
         final long LOGS_PER_FRAME = 10L;
-        final long timestamp = SystemClock.elapsedRealtime() / MILLI_PER_SECOND;
         if (mLastTimestamp != Long.MIN_VALUE)
         {
-            mDuration += timestamp - mLastTimestamp;
+            mDuration += timestampSeconds- mLastTimestamp;
             if (mNumFrames % LOGS_PER_FRAME == LOGS_PER_FRAME - 1)
             {
                 Log.d(TAG, "FPS: " + (mNumFrames / (double)mDuration));
             } // if
         } // else
-        mLastTimestamp = timestamp;
+        mLastTimestamp = timestampSeconds;
 
+        // Create JPEG
         final YuvImage image = new YuvImage(data, mPreviewFormat, mPreviewWidth, mPreviewHeight,
                 null /* strides */);
         image.compressToJpeg(mPreviewRect, 100 /* quality */, mJpegOutputStream);
-        Log.d(TAG, "JPEG size " + mJpegOutputStream.getLength());
-        mJpegOutputStream.seek(0);
 
+        mMJpegRtpStreamer.sendJpeg(data, mPreviewWidth, mPreviewHeight, timestamp);
+
+        // Clean up
+        mJpegOutputStream.seek(0);
         // XXX: I believe that because we're not calling methods in
         // another thread we're using Camera in a safe way. I might
         // be wrong, the documentation is not clear.
         camera.addCallbackBuffer(data);
-   } // sendPreviewFrame(byte[], camera)
+   } // sendPreviewFrame(byte[], camera, long)
 
 } // class ImageStreamer
 
