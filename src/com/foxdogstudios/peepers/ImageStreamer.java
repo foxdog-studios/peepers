@@ -248,7 +248,15 @@ import android.view.SurfaceHolder;
                 null /* strides */);
         image.compressToJpeg(mPreviewRect, 100 /* quality */, mJpegOutputStream);
 
-        mMJpegRtpStreamer.sendJpeg(data, mPreviewWidth, mPreviewHeight, timestamp);
+        try
+        {
+            mMJpegRtpStreamer.sendJpeg(data, mJpegOutputStream.getLength(), mPreviewWidth,
+                    mPreviewHeight, timestamp);
+        } // try
+        catch (final IOException e)
+        {
+            Log.w(TAG, "Could not send jpeg", e);
+        } // catch
 
         // Clean up
         mJpegOutputStream.seek(0);
