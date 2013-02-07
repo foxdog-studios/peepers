@@ -48,6 +48,6 @@ if ! which bashir &> /dev/null ; then
     cd /tmp
     git clone gitolite@foxdogstudios.com:bashir
     bashir/scripts/install.sh
-    rm -fr /bashir
+    rm -fr bashir
 fi
 
