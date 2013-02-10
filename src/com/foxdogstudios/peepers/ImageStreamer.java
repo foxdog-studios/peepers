@@ -250,8 +250,8 @@ import android.view.SurfaceHolder;
 
         try
         {
-            mMJpegRtpStreamer.sendJpeg(data, mJpegOutputStream.getLength(), mPreviewWidth,
-                    mPreviewHeight, timestamp);
+            mMJpegRtpStreamer.sendJpeg(mJpegOutputStream.getBuffer(), mJpegOutputStream.getLength(),
+                    mPreviewWidth, mPreviewHeight, timestamp);
         } // try
         catch (final IOException e)
         {

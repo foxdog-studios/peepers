@@ -12,7 +12,7 @@ import android.util.Log;
 {
     private static final String TAG = MJpegRtpStreamer.class.getSimpleName();
 
-    private static final int MTU = 15000;
+    private static final int MTU = 10000;
     private static final int RTP_HEADER_SIZE = 12;
     private static final int JPG_HEADER_SIZE = 8;
 
@@ -25,7 +25,7 @@ import android.util.Log;
     /* package */ MJpegRtpStreamer() throws IOException
     {
         super();
-        final InetAddress address = InetAddress.getByName("kilburn");
+        final InetAddress address = InetAddress.getByName("hopper");
         mSocket = new DatagramSocket();
         mPacket = new DatagramPacket(mData, 0 /* length */);
         mPacket.setAddress(address);
@@ -45,6 +45,7 @@ import android.util.Log;
         // SSRC
         setData(rng.nextInt(), 8, 12);
 
+        mData[12] = 2;
         // jpeg type YUV 420
         mData[16] = 1;
     } // constructor()
@@ -71,7 +72,7 @@ import android.util.Log;
 
         while (jpegOffset < length)
         {
-            setData(jpegOffset, 13, 15);
+            setData(jpegOffset, 13, 16);
 
             int dataEnd = RTP_HEADER_SIZE + JPG_HEADER_SIZE;
 
