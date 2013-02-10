@@ -29,7 +29,11 @@ sudo pacman --needed --noconfirm -Sy \
         git \
         kde-konsole \
         python \
+        python2 \
+        python2-distribute \
         vlc
+
+sudo easy_install-2.7 "http://corelabs.coresecurity.com/index.php?module=Wiki&action=attachment&type=tool&page=Pcapy&file=pcapy-0.10.8.tar.gz"
 
 if $install_aur; then
     yaourt --needed --noconfirm -Sy \
