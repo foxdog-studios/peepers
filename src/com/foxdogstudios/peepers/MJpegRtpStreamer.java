@@ -12,7 +12,7 @@ import android.util.Log;
 {
     private static final String TAG = MJpegRtpStreamer.class.getSimpleName();
 
-    private static final int MTU = 10000;
+    private static final int MTU = 15000;
     private static final int RTP_HEADER_SIZE = 12;
     private static final int JPG_HEADER_SIZE = 8;
 

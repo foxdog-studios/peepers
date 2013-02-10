@@ -25,6 +25,8 @@ import android.view.SurfaceHolder;
 
     private static final long OPEN_CAMERA_POLL_INTERVAL_MS = 1000L;
 
+    private static final int JPEG_QUALITY = 40;
+
     private final Object mLock = new Object();
     private final SurfaceHolder mPreviewDisplay;
 
@@ -246,7 +248,7 @@ import android.view.SurfaceHolder;
         // Create JPEG
         final YuvImage image = new YuvImage(data, mPreviewFormat, mPreviewWidth, mPreviewHeight,
                 null /* strides */);
-        image.compressToJpeg(mPreviewRect, 100 /* quality */, mJpegOutputStream);
+        image.compressToJpeg(mPreviewRect, JPEG_QUALITY, mJpegOutputStream);
 
         try
         {
