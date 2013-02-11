@@ -16,9 +16,9 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-/* package */ final class ImageStreamer extends Object
+/* package */ final class CameraRtpStreamer extends Object
 {
-    private static final String TAG = ImageStreamer.class.getSimpleName();
+    private static final String TAG = CameraRtpStreamer.class.getSimpleName();
 
     private static final int MESSAGE_TRY_START_STREAMING = 0;
     private static final int MESSAGE_SEND_PREVIEW_FRAME = 1;
@@ -47,7 +47,7 @@ import android.view.SurfaceHolder;
     private long mDuration = 0L;
     private long mLastTimestamp = Long.MIN_VALUE;
 
-    /* package */ ImageStreamer(final SurfaceHolder previewDisplay)
+    /* package */ CameraRtpStreamer(final SurfaceHolder previewDisplay)
     {
         super();
 
@@ -90,7 +90,7 @@ import android.view.SurfaceHolder;
         {
             if (mRunning)
             {
-                throw new IllegalStateException("ImageStreamer is already running");
+                throw new IllegalStateException("CameraRtpStreamer is already running");
             } // if
             mRunning = true;
         } // synchronized
@@ -114,7 +114,7 @@ import android.view.SurfaceHolder;
         {
             if (!mRunning)
             {
-                throw new IllegalStateException("ImageStreamer is already stopped");
+                throw new IllegalStateException("CameraRtpStreamer is already stopped");
             } // if
 
             mRunning = false;
@@ -262,11 +262,12 @@ import android.view.SurfaceHolder;
 
         // Clean up
         mJpegOutputStream.seek(0);
-        // XXX: I believe that because we're not calling methods in
-        // another thread we're using Camera in a safe way. I might
-        // be wrong, the documentation is not clear.
+        // XXX: I believe that this is thread-safe because we're not
+        // calling methods in other threads. I might be wrong, the
+        // documentation is not clear.
         camera.addCallbackBuffer(data);
    } // sendPreviewFrame(byte[], camera, long)
 
-} // class ImageStreamer
+
+} // class CameraRtpStreamer
 

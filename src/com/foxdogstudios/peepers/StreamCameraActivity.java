@@ -6,16 +6,16 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public final class ImageStreamerActivity extends Activity implements SurfaceHolder.Callback
+public final class StreamCameraActivity extends Activity implements SurfaceHolder.Callback
 {
-    private static final String TAG = ImageStreamerActivity.class.getSimpleName();
+    private static final String TAG = StreamCameraActivity.class.getSimpleName();
 
     private boolean mPreviewDisplayCreated = false;
     private boolean mRunning = false;
     private SurfaceHolder mPreviewDisplay = null;
-    private ImageStreamer mImageStreamer = null;
+    private CameraRtpStreamer mCameraRtpStreamer = null;
 
-    public ImageStreamerActivity()
+    public StreamCameraActivity()
     {
         super();
     } // constructor()
@@ -36,7 +36,7 @@ public final class ImageStreamerActivity extends Activity implements SurfaceHold
     {
         super.onResume();
         mRunning = true;
-        tryStartImageStreamer();
+        tryStartCameraRtpStreamer();
     } // onResume()
 
     @Override
@@ -44,7 +44,7 @@ public final class ImageStreamerActivity extends Activity implements SurfaceHold
     {
         super.onPause();
         mRunning = false;
-        ensureImageStreamerStopped();
+        ensureCameraRtpStreamerStopped();
     } // onPause()
 
     @Override
@@ -58,34 +58,34 @@ public final class ImageStreamerActivity extends Activity implements SurfaceHold
     public void surfaceCreated(final SurfaceHolder holder)
     {
         mPreviewDisplayCreated = true;
-        tryStartImageStreamer();
+        tryStartCameraRtpStreamer();
     } // surfaceCreated(SurfaceHolder)
 
     @Override
     public void surfaceDestroyed(final SurfaceHolder holder)
     {
         mPreviewDisplayCreated = false;
-        ensureImageStreamerStopped();
+        ensureCameraRtpStreamerStopped();
     } // surfaceDestroyed(SurfaceHolder)
 
-    private void tryStartImageStreamer()
+    private void tryStartCameraRtpStreamer()
     {
         if (mRunning && mPreviewDisplayCreated)
         {
-            mImageStreamer = new ImageStreamer(mPreviewDisplay);
-            mImageStreamer.start();
+            mCameraRtpStreamer = new CameraRtpStreamer(mPreviewDisplay);
+            mCameraRtpStreamer.start();
         } // if
-    } // tryStartImageStreamer()
+    } // tryStartCameraRtpStreamer()
 
-    private void ensureImageStreamerStopped()
+    private void ensureCameraRtpStreamerStopped()
     {
-        if (mImageStreamer != null)
+        if (mCameraRtpStreamer != null)
         {
-            mImageStreamer.stop();
-            mImageStreamer = null;
+            mCameraRtpStreamer.stop();
+            mCameraRtpStreamer = null;
         } // if
-    } // stopImageStreamer()
+    } // stopCameraRtpStreamer()
 
 
-} // class ImageStreamerActivity
+} // class StreamCameraActivity
 

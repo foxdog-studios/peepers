@@ -4,12 +4,13 @@ set -o errexit
 set -o nounset
 
 install_aur=false
+
 usage='
-    Install dependencies and set up enviroment.
+    Install dependencies and set up enviroment
 
     Usage:
 
-        # setup.sh [-a]
+        # setup-arch.sh [-a]
 
     -a  install AUR packages
 '
@@ -26,9 +27,9 @@ done
 unset opt usage
 
 sudo pacman --needed --noconfirm -Sy \
+        apache-ant \
         git \
-        kde-konsole \
-        python \
+        kdebase-konsole \
         python2 \
         python2-distribute \
         vlc
@@ -37,13 +38,13 @@ sudo easy_install-2.7 "http://corelabs.coresecurity.com/index.php?module=Wiki&ac
 
 if $install_aur; then
     yaourt --needed --noconfirm -Sy \
-            android-ndk \
             android-sdk \
             android-sdk-platform-tools \
             android-udev
-
+    sudo android update sdk --no-ui --filter android-10
+    sudo systemctl enable adb.service
+    sudo systemctl start adb.service
     sudo gpasswd -a "$(whoami)" adbusers
-
 fi
 unset install_aur
 
@@ -55,3 +56,8 @@ if ! which bashir &> /dev/null ; then
     rm -fr bashir
 fi
 
+echo '
+Manual steps:
+
+    1) Reboot (for udev rules and new groups)
+'
