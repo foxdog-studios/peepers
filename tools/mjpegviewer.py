@@ -132,6 +132,7 @@ class MJpegCaptor(object):
                     return
         print('No SOI found')
 
+
 def create_argument_parser():
     argument_parser = ArgumentParser(description=DESCRIPTION)
     add_argument = argument_parser.add_argument
