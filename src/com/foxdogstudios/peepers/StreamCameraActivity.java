@@ -1,8 +1,12 @@
 package com.foxdogstudios.peepers;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -14,6 +18,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     private boolean mRunning = false;
     private SurfaceHolder mPreviewDisplay = null;
     private CameraRtpStreamer mCameraRtpStreamer = null;
+    private Preferences mPrefs = null;
+    private MenuItem mSettingsMenuItem = null;
 
     public StreamCameraActivity()
     {
@@ -25,6 +31,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        new LoadPreferencesTask().execute();
 
         mPreviewDisplay = ((SurfaceView) findViewById(R.id.camera)).getHolder();
         mPreviewDisplay.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -70,9 +78,11 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
 
     private void tryStartCameraRtpStreamer()
     {
-        if (mRunning && mPreviewDisplayCreated)
+        if (mRunning && mPreviewDisplayCreated && mPrefs != null)
         {
-            mCameraRtpStreamer = new CameraRtpStreamer(mPreviewDisplay);
+            final Preferences prefs = new Preferences(this);
+            mCameraRtpStreamer = new CameraRtpStreamer(prefs.getHostName(), prefs.getPort(),
+                    prefs.getJpegQuality(), mPreviewDisplay);
             mCameraRtpStreamer.start();
         } // if
     } // tryStartCameraRtpStreamer()
@@ -85,6 +95,49 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
             mCameraRtpStreamer = null;
         } // if
     } // stopCameraRtpStreamer()
+
+    @Override
+    public boolean onCreateOptionsMenu(final Menu menu)
+    {
+        super.onCreateOptionsMenu(menu);
+        mSettingsMenuItem = menu.add(R.string.settings);
+        mSettingsMenuItem.setIcon(android.R.drawable.ic_menu_manage);
+        return true;
+    } // onCreateOptionsMenu(Menu)
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item)
+    {
+        if (item != mSettingsMenuItem)
+        {
+            return super.onOptionsItemSelected(item);
+        } // if
+        startActivity(new Intent(this, PeepersPreferenceActivity.class));
+        return true;
+    } // onOptionsItemSelected(MenuItem)
+
+    private final class LoadPreferencesTask extends AsyncTask<Void, Void, Preferences>
+    {
+        private LoadPreferencesTask()
+        {
+            super();
+        } // constructor()
+
+        @Override
+        protected Preferences doInBackground(Void... noParams)
+        {
+            return new Preferences(StreamCameraActivity.this);
+        } // doInBackground()
+
+        @Override
+        protected void onPostExecute(final Preferences prefs)
+        {
+            StreamCameraActivity.this.mPrefs = prefs;
+            tryStartCameraRtpStreamer();
+        } // onPostExecute(Void)
+
+
+    } // class LoadPreferencesTask
 
 
 } // class StreamCameraActivity

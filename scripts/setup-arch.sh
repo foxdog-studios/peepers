@@ -34,6 +34,10 @@ sudo pacman --needed --noconfirm -Sy \
         python2-distribute \
         vlc
 
+# XXX: VLC hard crashes if this isn't done. This can probably be
+# removed in the future when the vlc package is fixed.
+sudo /usr/lib/vlc/vlc-cache-gen -f usr/lib/vlc/plugins
+
 sudo easy_install-2.7 "http://corelabs.coresecurity.com/index.php?module=Wiki&action=attachment&type=tool&page=Pcapy&file=pcapy-0.10.8.tar.gz"
 
 if $install_aur; then

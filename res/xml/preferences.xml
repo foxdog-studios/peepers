@@ -1,0 +1,17 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="Destination" />
+    <EditTextPreference
+        android:key="host_name"
+        android:title="Host name"
+        android:inputType="textUri" />
+    <EditTextPreference
+        android:key="port"
+        android:title="Port"
+        android:inputType="number" />
+    <PreferenceCategory android:title="Quality" />
+    <EditTextPreference
+        android:key="jpeg_quality"
+        android:title="JPEG quality"
+        android:inputType="number" />
+</PreferenceScreen>
+

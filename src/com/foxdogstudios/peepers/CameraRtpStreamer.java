@@ -25,9 +25,11 @@ import android.view.SurfaceHolder;
 
     private static final long OPEN_CAMERA_POLL_INTERVAL_MS = 1000L;
 
-    private static final int JPEG_QUALITY = 40;
-
     private final Object mLock = new Object();
+
+    private final String mHostName;
+    private final int mPort;
+    private final int mJpegQuality;
     private final SurfaceHolder mPreviewDisplay;
 
     private boolean mRunning = false;
@@ -47,7 +49,8 @@ import android.view.SurfaceHolder;
     private long mDuration = 0L;
     private long mLastTimestamp = Long.MIN_VALUE;
 
-    /* package */ CameraRtpStreamer(final SurfaceHolder previewDisplay)
+    /* package */ CameraRtpStreamer(final String hostName, final int port, final int jpegQuality,
+            final SurfaceHolder previewDisplay)
     {
         super();
 
@@ -56,6 +59,9 @@ import android.view.SurfaceHolder;
             throw new IllegalArgumentException("previewDisplay must not be null");
         } // if
 
+        mHostName = hostName;
+        mPort = port;
+        mJpegQuality = jpegQuality;
         mPreviewDisplay = previewDisplay;
     } // constructor(SurfaceHolder)
 
@@ -161,14 +167,22 @@ import android.view.SurfaceHolder;
 
     private void startStreamingIfRunning() throws IOException
     {
-        final MJpegRtpStreamer streamer = new MJpegRtpStreamer();
+        final MJpegRtpStreamer streamer = new MJpegRtpStreamer(mHostName, mPort);
 
         // Throws RuntimeException if the camera is currently opened
         // by another application.
         final Camera camera = Camera.open();
 
-        // Set up callback buffer
         final Camera.Parameters params = camera.getParameters();
+
+        // Set Preview FPS range. The range with the greatest maximum
+        // is returned first.
+        final int[] range = params.getSupportedPreviewFpsRange().get(0);
+        params.setPreviewFpsRange(range[Camera.Parameters.PREVIEW_FPS_MIN_INDEX],
+                range[Camera.Parameters.PREVIEW_FPS_MAX_INDEX]);
+        camera.setParameters(params);
+
+        // Set up preview callback
         mPreviewFormat = params.getPreviewFormat();
         final Camera.Size previewSize = params.getPreviewSize();
         mPreviewWidth = previewSize.width;
@@ -248,16 +262,21 @@ import android.view.SurfaceHolder;
         // Create JPEG
         final YuvImage image = new YuvImage(data, mPreviewFormat, mPreviewWidth, mPreviewHeight,
                 null /* strides */);
-        image.compressToJpeg(mPreviewRect, JPEG_QUALITY, mJpegOutputStream);
+        image.compressToJpeg(mPreviewRect, mJpegQuality, mJpegOutputStream);
 
         try
         {
             mMJpegRtpStreamer.sendJpeg(mJpegOutputStream.getBuffer(), mJpegOutputStream.getLength(),
                     mPreviewWidth, mPreviewHeight, timestamp);
         } // try
-        catch (final IOException e)
+        catch (final IOException couldNotSendJpeg)
         {
-            Log.w(TAG, "Could not send jpeg", e);
+            // If an exception could while we're not running, it
+            // doesn't matter.
+            if (mRunning)
+            {
+                Log.w(TAG, "Could not send JPEG", couldNotSendJpeg);
+            } // if
         } // catch
 
         // Clean up

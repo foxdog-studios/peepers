@@ -22,14 +22,14 @@ import android.util.Log;
 
     private int mSequenceNumber = 0;
 
-    /* package */ MJpegRtpStreamer() throws IOException
+    /* package */ MJpegRtpStreamer(final String hostName, final int port) throws IOException
     {
         super();
-        final InetAddress address = InetAddress.getByName("hopper");
+        final InetAddress address = InetAddress.getByName(hostName);
         mSocket = new DatagramSocket();
         mPacket = new DatagramPacket(mData, 0 /* length */);
         mPacket.setAddress(address);
-        mPacket.setPort(1024);
+        mPacket.setPort(port);
 
         Random rng = new Random();
         // Version 2
