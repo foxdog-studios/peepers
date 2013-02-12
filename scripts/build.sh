@@ -15,6 +15,7 @@ function usage
     -b  build
     -c  clean
     -i  install
+    -j  localstreamer
     -l  launch
     -o  log
     -u  uninstall
@@ -30,16 +31,18 @@ fi
 build=false
 clean=false
 install=false
+localstreamer=false
 launch=false
 log=false
 uninstall=false
 video=false
 
-while getopts :bcilouv opt; do
+while getopts :bcijlouv opt; do
     case "${opt}" in
         b) build=true ;;
         c) clean=true ;;
         i) install=true ;;
+        j) localstreamer=true ;;
         l) launch=true ;;
         o) log=true ;;
         u) uninstall=true ;;
@@ -58,6 +61,7 @@ unset uninstall
 
 if $clean; then
     ant clean
+    ant -buildfile tools/localstreamer/build.xml clean
 fi
 unset clean
 
@@ -70,6 +74,11 @@ if $install; then
     ant installd
 fi
 unset install
+
+if $localstreamer; then
+    scripts/localstreamer.sh
+fi
+unset localstreamer
 
 if $launch; then
     al.py
