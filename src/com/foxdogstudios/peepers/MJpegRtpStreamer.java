@@ -6,8 +6,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Random;
 
-import android.util.Log;
-
 /* package */ final class MJpegRtpStreamer
 {
     private static final String TAG = MJpegRtpStreamer.class.getSimpleName();
