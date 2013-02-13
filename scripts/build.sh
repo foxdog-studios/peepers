@@ -76,7 +76,7 @@ fi
 unset install
 
 if $localstreamer; then
-    scripts/localstreamer.sh
+    konsole -e ./scripts/localstreamer.sh &> /dev/null &
 fi
 unset localstreamer
 
@@ -86,8 +86,9 @@ fi
 unset launch
 
 if $video; then
-    scripts/video.sh
+    konsole -e ./scripts/video.sh &> /dev/null &
 fi
+unset video
 
 if $log; then
     logdog.py
