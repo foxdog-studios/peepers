@@ -27,7 +27,7 @@ unset opt usage
 
 sudo pacman --needed --noconfirm -Sy \
         git \
-        kde-konsole \
+        kdebase-konsole \
         python \
         python2 \
         python2-distribute \
@@ -40,7 +40,8 @@ if $install_aur; then
             android-ndk \
             android-sdk \
             android-sdk-platform-tools \
-            android-udev
+            android-udev \
+            javacv
 
     sudo gpasswd -a "$(whoami)" adbusers
 
