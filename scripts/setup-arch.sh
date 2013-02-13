@@ -44,10 +44,13 @@ if $install_aur; then
     yaourt --needed --noconfirm -Sy \
             android-sdk \
             android-sdk-platform-tools \
-            android-udev
+            android-udev \
+            javacv
+
     sudo android update sdk --no-ui --filter android-10
     sudo systemctl enable adb.service
     sudo systemctl start adb.service
+
     sudo gpasswd -a "$(whoami)" adbusers
 fi
 unset install_aur

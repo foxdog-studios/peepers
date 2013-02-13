@@ -1,15 +1,12 @@
 package com.foxdogstudios.peepers;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 public class LocalStreamer
 {
-
-    public static void main(final String[] args) throws InterruptedException
+    public static void main(final String[] args)
     {
-        if (args.length != 5)
+        if (args.length != 2)
         {
             System.err.println("Usage: localstreamer host_name port jpeg width height");
             return;
@@ -17,71 +14,19 @@ public class LocalStreamer
 
         final String hostName = args[0];
         final int port = Integer.parseInt(args[1]);
-        final String fileName = args[2];
-        final int jpegWidth = Integer.parseInt(args[3]);
-        final int jpegHeight = Integer.parseInt(args[4]);
 
-        final RandomAccessFile jpegFile;
+        final WebcamStreamer webcamStreamer;
         try
         {
-            jpegFile = new RandomAccessFile(fileName, "r");
-        } // try
-        catch (FileNotFoundException e)
-        {
-            System.err.println("Could not find file '" + fileName + "'");
-            return;
-        } // catch
-
-        final int jpegLength;
-        try
-        {
-            jpegLength = (int) jpegFile.length();
+            webcamStreamer = new WebcamStreamer(hostName, port);
         } // try
         catch (IOException e)
         {
-            System.err.println("Could not get length of file '" + fileName + "'");
+            System.err.println("Could not create WebcamStreamer");
             return;
         } // catch
 
-        final byte[] jpegBuffer = new byte[jpegLength];
-        try
-        {
-            jpegFile.read(jpegBuffer);
-        } // try
-        catch (IOException e)
-        {
-            System.err.println("Could not read file '" + fileName + "'");
-            return;
-        } // catch
-
-        final MJpegRtpStreamer mJpegRtpStreamer;
-        try
-        {
-            mJpegRtpStreamer = new MJpegRtpStreamer(hostName, port);
-        } // try
-        catch (IOException e)
-        {
-            System.err.println("Could not create MJpegRtpStreamer()");
-            return;
-        } // catch
-
-        System.out.println("Beginning MJPEG stream, Ctrl-C to stop");
-
-        while (true)
-        {
-            final long timeStamp = System.currentTimeMillis();
-            try
-            {
-                mJpegRtpStreamer.sendJpeg(jpegBuffer, jpegLength, jpegWidth, jpegHeight,
-                        timeStamp);
-            } // try
-            catch (IOException e)
-            {
-                System.err.println("Could not send jpeg");
-            } // catch
-            Thread.sleep(1000);
-        } // while
-
+        new Thread(webcamStreamer).start();
     } // main(String[])
 } // class LocalStreamer
 

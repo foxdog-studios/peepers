@@ -4,6 +4,7 @@
     <property name="build.dir" location="build" />
     <property name="class.dir" location="${build.dir}/classes" />
     <property name="jar.dir" location="${build.dir}/jar" />
+    <property name="javacv.dir" location="/usr/share/java/javacv"/>
 
     <target name="clean">
         <delete dir="${build.dir}"/>
@@ -19,7 +20,13 @@
         <javac
             includeantruntime="false"
             srcdir="${src.dir}"
-            destdir="${class.dir}"/>
+            destdir="${class.dir}">
+            <classpath>
+               <fileset dir="${javacv.dir}">
+                  <include name="**/*.jar" />
+               </fileset>
+             </classpath>
+        </javac>
     </target>
 
     <target name="jar" depends="compile">
@@ -29,6 +36,7 @@
                 <attribute name="Main-Class"
                            value="com.foxdogstudios.peepers.LocalStreamer"/>
             </manifest>
+            <zipgroupfileset dir="${javacv.dir}" includes="**/*.jar"/>
         </jar>
     </target>
 
@@ -36,9 +44,6 @@
         <java jar="build/jar/LocalStreamer.jar" fork="true">
             <arg value="localhost"/>
             <arg value="1024"/>
-            <arg file="res/test.jpg"/>
-            <arg value="480"/>
-            <arg value="360"/>
         </java>
     </target>
 </project>
