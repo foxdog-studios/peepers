@@ -6,22 +6,25 @@ import java.io.RandomAccessFile;
 
 public class LocalStreamer
 {
+
     public static void main(final String[] args) throws InterruptedException
     {
-        if (args.length != 3)
+        if (args.length != 5)
         {
-            System.err.println("Usage: localstreamer <jpeg> <width> <height");
+            System.err.println("Usage: localstreamer host_name port jpeg width height");
             return;
         } // if
 
-        final String fileName = args[0];
-        final int jpegWidth = Integer.parseInt(args[1]);
-        final int jpegHeight = Integer.parseInt(args[2]);
+        final String hostName = args[0];
+        final int port = Integer.parseInt(args[1]);
+        final String fileName = args[2];
+        final int jpegWidth = Integer.parseInt(args[3]);
+        final int jpegHeight = Integer.parseInt(args[4]);
 
         final RandomAccessFile jpegFile;
         try
         {
-            jpegFile = new RandomAccessFile(args[0], "r");
+            jpegFile = new RandomAccessFile(fileName, "r");
         } // try
         catch (FileNotFoundException e)
         {
@@ -54,7 +57,7 @@ public class LocalStreamer
         final MJpegRtpStreamer mJpegRtpStreamer;
         try
         {
-            mJpegRtpStreamer = new MJpegRtpStreamer();
+            mJpegRtpStreamer = new MJpegRtpStreamer(hostName, port);
         } // try
         catch (IOException e)
         {

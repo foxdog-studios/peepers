@@ -34,10 +34,12 @@
 
     <target name="run" depends="jar">
         <java jar="build/jar/LocalStreamer.jar" fork="true">
-            <arg value="res/test.jpg"/>
+            <arg value="localhost"/>
+            <arg value="1024"/>
+            <arg file="res/test.jpg"/>
             <arg value="480"/>
             <arg value="360"/>
         </java>
     </target>
-
 </project>
+
