@@ -36,7 +36,6 @@ import android.util.Log;
         } //try
         catch (final NumberFormatException invalidValue)
         {
-            Log.d("LOL", "stuff", invalidValue);
             return defValue;
         } // catch
     } // getInt(String, int)
