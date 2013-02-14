@@ -17,7 +17,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     private boolean mPreviewDisplayCreated = false;
     private boolean mRunning = false;
     private SurfaceHolder mPreviewDisplay = null;
-    private CameraRtpStreamer mCameraRtpStreamer = null;
+    private CameraStreamer mCameraStreamer = null;
     private Preferences mPrefs = null;
     private MenuItem mSettingsMenuItem = null;
 
@@ -44,7 +44,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     {
         super.onResume();
         mRunning = true;
-        tryStartCameraRtpStreamer();
+        tryStartCameraStreamer();
     } // onResume()
 
     @Override
@@ -52,7 +52,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     {
         super.onPause();
         mRunning = false;
-        ensureCameraRtpStreamerStopped();
+        ensureCameraStreamerStopped();
     } // onPause()
 
     @Override
@@ -66,35 +66,35 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     public void surfaceCreated(final SurfaceHolder holder)
     {
         mPreviewDisplayCreated = true;
-        tryStartCameraRtpStreamer();
+        tryStartCameraStreamer();
     } // surfaceCreated(SurfaceHolder)
 
     @Override
     public void surfaceDestroyed(final SurfaceHolder holder)
     {
         mPreviewDisplayCreated = false;
-        ensureCameraRtpStreamerStopped();
+        ensureCameraStreamerStopped();
     } // surfaceDestroyed(SurfaceHolder)
 
-    private void tryStartCameraRtpStreamer()
+    private void tryStartCameraStreamer()
     {
         if (mRunning && mPreviewDisplayCreated && mPrefs != null)
         {
             final Preferences prefs = new Preferences(this);
-            mCameraRtpStreamer = new CameraRtpStreamer(prefs.getHostName(), prefs.getPort(),
-                    prefs.getJpegQuality(), mPreviewDisplay);
-            mCameraRtpStreamer.start();
+            mCameraStreamer = new CameraStreamer(mPrefs.getPort(), prefs.getJpegQuality(),
+                    mPreviewDisplay);
+            mCameraStreamer.start();
         } // if
-    } // tryStartCameraRtpStreamer()
+    } // tryStartCameraStreamer()
 
-    private void ensureCameraRtpStreamerStopped()
+    private void ensureCameraStreamerStopped()
     {
-        if (mCameraRtpStreamer != null)
+        if (mCameraStreamer != null)
         {
-            mCameraRtpStreamer.stop();
-            mCameraRtpStreamer = null;
+            mCameraStreamer.stop();
+            mCameraStreamer = null;
         } // if
-    } // stopCameraRtpStreamer()
+    } // stopCameraStreamer()
 
     @Override
     public boolean onCreateOptionsMenu(final Menu menu)
@@ -133,7 +133,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         protected void onPostExecute(final Preferences prefs)
         {
             StreamCameraActivity.this.mPrefs = prefs;
-            tryStartCameraRtpStreamer();
+            tryStartCameraStreamer();
         } // onPostExecute(Void)
 
 

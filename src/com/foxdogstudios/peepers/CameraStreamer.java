@@ -16,9 +16,9 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-/* package */ final class CameraRtpStreamer extends Object
+/* package */ final class CameraStreamer extends Object
 {
-    private static final String TAG = CameraRtpStreamer.class.getSimpleName();
+    private static final String TAG = CameraStreamer.class.getSimpleName();
 
     private static final int MESSAGE_TRY_START_STREAMING = 0;
     private static final int MESSAGE_SEND_PREVIEW_FRAME = 1;
@@ -27,7 +27,6 @@ import android.view.SurfaceHolder;
 
     private final Object mLock = new Object();
 
-    private final String mHostName;
     private final int mPort;
     private final int mJpegQuality;
     private final SurfaceHolder mPreviewDisplay;
@@ -42,14 +41,14 @@ import android.view.SurfaceHolder;
     private Rect mPreviewRect = null;
     private int mPreviewBufferSize = Integer.MIN_VALUE;
     private MemoryOutputStream mJpegOutputStream = null;
-    private MJpegRtpStreamer mMJpegRtpStreamer = null;
+    private MJpegHttpStreamer mMJpegHttpStreamer = null;
 
     // Frame rate data
     private long mNumFrames = 0L;
     private long mDuration = 0L;
     private long mLastTimestamp = Long.MIN_VALUE;
 
-    /* package */ CameraRtpStreamer(final String hostName, final int port, final int jpegQuality,
+    /* package */ CameraStreamer(final int port, final int jpegQuality,
             final SurfaceHolder previewDisplay)
     {
         super();
@@ -59,7 +58,6 @@ import android.view.SurfaceHolder;
             throw new IllegalArgumentException("previewDisplay must not be null");
         } // if
 
-        mHostName = hostName;
         mPort = port;
         mJpegQuality = jpegQuality;
         mPreviewDisplay = previewDisplay;
@@ -96,7 +94,7 @@ import android.view.SurfaceHolder;
         {
             if (mRunning)
             {
-                throw new IllegalStateException("CameraRtpStreamer is already running");
+                throw new IllegalStateException("CameraStreamer is already running");
             } // if
             mRunning = true;
         } // synchronized
@@ -120,13 +118,13 @@ import android.view.SurfaceHolder;
         {
             if (!mRunning)
             {
-                throw new IllegalStateException("CameraRtpStreamer is already stopped");
+                throw new IllegalStateException("CameraStreamer is already stopped");
             } // if
 
             mRunning = false;
-            if (mMJpegRtpStreamer != null)
+            if (mMJpegHttpStreamer != null)
             {
-                mMJpegRtpStreamer.close();
+                mMJpegHttpStreamer.stop();
             } // if
             if (mCamera != null)
             {
@@ -167,12 +165,9 @@ import android.view.SurfaceHolder;
 
     private void startStreamingIfRunning() throws IOException
     {
-        final MJpegRtpStreamer streamer = new MJpegRtpStreamer(mHostName, mPort);
-
         // Throws RuntimeException if the camera is currently opened
         // by another application.
         final Camera camera = Camera.open();
-
         final Camera.Parameters params = camera.getParameters();
 
         // Set Preview FPS range. The range with the greatest maximum
@@ -202,16 +197,17 @@ import android.view.SurfaceHolder;
         // the uncompressed image.
         mJpegOutputStream = new MemoryOutputStream(mPreviewBufferSize);
 
+        final MJpegHttpStreamer streamer = new MJpegHttpStreamer(mPort, mPreviewBufferSize);
+        streamer.start();
+
         synchronized (mLock)
         {
             if (!mRunning)
             {
-                streamer.close();
+                streamer.stop();
                 camera.release();
                 return;
             } // if
-
-            mMJpegRtpStreamer = streamer;
 
             try
             {
@@ -219,10 +215,12 @@ import android.view.SurfaceHolder;
             } // try
             catch (final IOException e)
             {
+                streamer.stop();
                 camera.release();
                 throw e;
             } // catch
 
+            mMJpegHttpStreamer = streamer;
             camera.startPreview();
             mCamera = camera;
         } // synchronized
@@ -264,20 +262,8 @@ import android.view.SurfaceHolder;
                 null /* strides */);
         image.compressToJpeg(mPreviewRect, mJpegQuality, mJpegOutputStream);
 
-        try
-        {
-            mMJpegRtpStreamer.sendJpeg(mJpegOutputStream.getBuffer(), mJpegOutputStream.getLength(),
-                    mPreviewWidth, mPreviewHeight, timestamp);
-        } // try
-        catch (final IOException couldNotSendJpeg)
-        {
-            // If an exception could while we're not running, it
-            // doesn't matter.
-            if (mRunning)
-            {
-                Log.w(TAG, "Could not send JPEG", couldNotSendJpeg);
-            } // if
-        } // catch
+        mMJpegHttpStreamer.streamJpeg(mJpegOutputStream.getBuffer(), mJpegOutputStream.getLength(),
+                timestamp);
 
         // Clean up
         mJpegOutputStream.seek(0);
@@ -288,5 +274,5 @@ import android.view.SurfaceHolder;
    } // sendPreviewFrame(byte[], camera, long)
 
 
-} // class CameraRtpStreamer
+} // class CameraStreamer
 

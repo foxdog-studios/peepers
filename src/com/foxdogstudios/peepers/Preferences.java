@@ -23,11 +23,6 @@ import android.util.Log;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
     } // constructor()
 
-    /* package */ String getHostName()
-    {
-        return mPrefs.getString(HOST_NAME,  null /* defValue */);
-    } // getHostName()
-
     private int getInt(final String key, final int defValue)
     {
         try
@@ -43,13 +38,12 @@ import android.util.Log;
     /* package */ int getJpegQuality()
     {
         // Default to the highest JPEG quality
-        return getInt(JPEG_QUALITY, 100 /* defValue */);
+        return getInt(JPEG_QUALITY, 40 /* defValue */);
     } // getJpegQuality()
 
     /* package */ int getPort()
     {
-        // Default to the first unprivileged port
-        return getInt(PORT, 1024 /* defValue */);
+        return getInt(PORT, 8080 /* defValue */);
     } // getPort()
 
 

@@ -1,0 +1,245 @@
+package com.foxdogstudios.peepers;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+
+import android.util.Log;
+
+/* package */ final class MJpegHttpStreamer
+{
+    private static final String TAG = MJpegHttpStreamer.class.getSimpleName();
+
+    private static final String BOUNDARY = "--gc0p4Jq0M2Yt08jU534c0p--";
+    private static final String BOUNDARY_LINES = "\r\n--gc0p4Jq0M2Yt08jU534c0p--\r\n";
+
+    private static final String HTTP_HEADER =
+        "HTTP/1.0 200 OK\r\n"
+        + "Server: iRecon\r\n"
+        + "Connection: close\r\n"
+        + "Max-Age: 0\r\n"
+        + "Expires: 0\r\n"
+        + "Cache-Control: no-store, no-cache, must-revalidate, pre-check=0, "
+            + "post-check=0, max-age=0\r\n"
+        + "Pragma: no-cache\r\n"
+        + "Content-Type: multipart/x-mixed-replace; "
+            + "boundary=" + BOUNDARY + "\r\n"
+        + BOUNDARY_LINES;
+
+    private final int mPort;
+
+    private boolean mNewJpeg = false;
+    private boolean mStreamingBufferA = true;
+    private final byte[] mBufferA;
+    private final byte[] mBufferB;
+    private int mLengthA = Integer.MIN_VALUE;
+    private int mLengthB = Integer.MIN_VALUE;
+    private long mTimestampA = Long.MIN_VALUE;
+    private long mTimestampB = Long.MIN_VALUE;
+    private final Object mBufferLock = new Object();
+
+    private Thread mWorker = null;
+    private volatile boolean mRunning = false;
+
+    /* package */ MJpegHttpStreamer(final int port, final int bufferSize) throws IOException
+    {
+        super();
+        mPort = port;
+        mBufferA = new byte[bufferSize];
+        mBufferB = new byte[bufferSize];
+    } // constructor(int)
+
+    /* package */ void start()
+    {
+        if (mRunning)
+        {
+            throw new IllegalStateException("MJpegHttpStreamer is already running");
+        } // if
+
+        mRunning = true;
+        mWorker = new Thread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                workerRun();
+            } // run()
+        });
+        mWorker.start();
+    } // start()
+
+    /* package */ void stop()
+    {
+        if (!mRunning)
+        {
+            throw new IllegalStateException("MJpegHttpStreamer is already stopped");
+        } // if
+
+        mRunning = false;
+        mWorker.interrupt();
+    } // cancel()
+
+    /* package */ void streamJpeg(final byte[] jpeg, final int length, final long timestamp)
+    {
+        synchronized (mBufferLock)
+        {
+            final byte[] buffer;
+            if (mStreamingBufferA)
+            {
+                buffer = mBufferB;
+                mLengthB = length;
+                mTimestampB = timestamp;
+            } // if
+            else
+            {
+                buffer = mBufferA;
+                mLengthA = length;
+                mTimestampA = timestamp;
+            } // else
+            System.arraycopy(jpeg, 0 /* srcPos */, buffer, 0 /* dstPos */, length);
+            mNewJpeg = true;
+            mBufferLock.notify();
+        } // synchronized
+    } // streamJpeg(byte[], int, long)
+
+    private void workerRun()
+    {
+        while (mRunning)
+        {
+            try
+            {
+                acceptAndStream();
+            } // try
+            catch (final IOException e)
+            {
+                Log.d(TAG, "An exception occured while streaming", e);
+            } // catch
+        } // while
+    } // mainLoop()
+
+    private void acceptAndStream() throws IOException
+    {
+        ServerSocket serverSocket = null;
+        Socket socket = null;
+        DataOutputStream stream = null;
+
+        try
+        {
+            serverSocket = new ServerSocket(mPort);
+            serverSocket.setSoTimeout(1000 /* milliseconds */);
+
+            do
+            {
+                try
+                {
+                    socket = serverSocket.accept();
+                } // try
+                catch (final SocketTimeoutException e)
+                {
+                    if (!mRunning)
+                    {
+                        return;
+                    }
+                } // catch
+            } while (socket == null);
+
+            serverSocket.close();
+            serverSocket = null;
+            stream = new DataOutputStream(socket.getOutputStream());
+            stream.writeBytes(HTTP_HEADER);
+            stream.flush();
+
+            while (mRunning)
+            {
+                final byte[] buffer;
+                final int length;
+                final long timestamp;
+
+                synchronized (mBufferLock)
+                {
+                    while (!mNewJpeg)
+                    {
+                        try
+                        {
+                            mBufferLock.wait();
+                        } // try
+                        catch (final InterruptedException stopMayHaveBeenCalled)
+                        {
+                            // stop() may have been called
+                            return;
+                        } // catch
+                    } // while
+
+                    mStreamingBufferA = !mStreamingBufferA;
+
+                    if (mStreamingBufferA)
+                    {
+                        buffer = mBufferA;
+                        length = mLengthA;
+                        timestamp = mTimestampA;
+                    } // if
+                    else
+                    {
+                        buffer = mBufferB;
+                        length = mLengthB;
+                        timestamp = mTimestampB;
+                    } // else
+
+                    mNewJpeg = false;
+                } // synchronized
+
+                stream.writeBytes(
+                    "Content-type: image/jpeg\r\n"
+                    + "Content-Length: " + length + "\r\n"
+                    + "X-Timestamp:" + timestamp + "\r\n"
+                    + "\r\n"
+                );
+                stream.write(buffer, 0 /* offset */, length);
+                stream.writeBytes(BOUNDARY_LINES);
+                stream.flush();
+            } // while
+        } // try
+        finally
+        {
+            if (stream != null)
+            {
+                try
+                {
+                    stream.close();
+                } // try
+                catch (final IOException e)
+                {
+                    // Ingore
+                    Log.v(TAG, "Exception while closing stream", e);
+                } // catch
+            } //
+            if (socket != null)
+            {
+                try
+                {
+                    socket.close();
+                } // try
+                catch (final IOException e)
+                {
+                    Log.v(TAG, "Exception while closing socket", e);
+                } // catch
+            } // socket
+            if (serverSocket != null)
+            {
+                try
+                {
+                    serverSocket.close();
+                } // try
+                catch (final IOException e)
+                {
+                    Log.v(TAG, "Exception while closing server socket", e);
+                } // catch
+            } // if
+        } // finally
+    } // accept()
+
+
+} // class MJpegHttpStreamer
+
