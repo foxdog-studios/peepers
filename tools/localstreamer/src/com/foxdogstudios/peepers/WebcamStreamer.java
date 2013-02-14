@@ -20,11 +20,16 @@ public class WebcamStreamer implements Runnable
     IplImage image;
     CanvasFrame canvas = new CanvasFrame("Web Cam");
     final MJpegRtpStreamer mJpegRtpStreamer;
+    final HttpStreamer httpStreamer;
+    boolean mUseHttp;
 
-    public WebcamStreamer(final String hostName, final int port) throws IOException
+    public WebcamStreamer(final String hostName, final int port, final boolean http)
+        throws IOException
     {
         canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
         mJpegRtpStreamer = new MJpegRtpStreamer(hostName, port);
+        httpStreamer = new HttpStreamer();
+        mUseHttp = http;
     } // constructor
 
     @Override
@@ -40,6 +45,20 @@ public class WebcamStreamer implements Runnable
             System.err.println("Could not start the webcam grabber");
             return;
         } //catch
+
+        if (mUseHttp)
+        {
+            try
+            {
+                System.out.println("Waiting for connection");
+                httpStreamer.acceptConnection();
+            } // try
+            catch (IOException e)
+            {
+                System.err.println("Could not accept HTTP connection");
+                return;
+            } // catch
+        } // if
 
         IplImage img;
         while (true)
@@ -103,8 +122,16 @@ public class WebcamStreamer implements Runnable
 
             try
             {
-                mJpegRtpStreamer.sendJpeg(jpegBuffer, jpegLength, img.width(), img.height(),
-                        System.currentTimeMillis());
+                long timestamp = System.currentTimeMillis();
+                if (mUseHttp)
+                {
+                    httpStreamer.writeJpeg(jpegBuffer, jpegLength, timestamp);
+                } // if
+                else
+                {
+                    mJpegRtpStreamer.sendJpeg(jpegBuffer, jpegLength, img.width(), img.height(),
+                            timestamp);
+                } // else
             } // try
             catch (IOException e)
             {

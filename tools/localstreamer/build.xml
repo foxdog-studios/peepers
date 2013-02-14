@@ -25,7 +25,7 @@
                <fileset dir="${javacv.dir}">
                   <include name="**/*.jar" />
                </fileset>
-             </classpath>
+            </classpath>
         </javac>
     </target>
 
@@ -40,10 +40,14 @@
         </jar>
     </target>
 
-    <target name="run" depends="jar">
+    <target name="run-rtp" depends="jar">
         <java jar="build/jar/LocalStreamer.jar" fork="true">
             <arg value="localhost"/>
             <arg value="1024"/>
+        </java>
+    </target>
+    <target name="run-http" depends="jar">
+        <java jar="build/jar/LocalStreamer.jar" fork="true">
         </java>
     </target>
 </project>
