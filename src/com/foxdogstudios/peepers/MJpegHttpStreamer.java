@@ -13,11 +13,11 @@ import android.util.Log;
     private static final String TAG = MJpegHttpStreamer.class.getSimpleName();
 
     private static final String BOUNDARY = "--gc0p4Jq0M2Yt08jU534c0p--";
-    private static final String BOUNDARY_LINES = "\r\n--gc0p4Jq0M2Yt08jU534c0p--\r\n";
+    private static final String BOUNDARY_LINES = "\r\n" + BOUNDARY + "\r\n";
 
     private static final String HTTP_HEADER =
         "HTTP/1.0 200 OK\r\n"
-        + "Server: iRecon\r\n"
+        + "Server: Peepers\r\n"
         + "Connection: close\r\n"
         + "Max-Age: 0\r\n"
         + "Expires: 0\r\n"
