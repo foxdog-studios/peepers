@@ -82,7 +82,7 @@ fi
 unset video
 
 if $log; then
-    logdog.py
+    logdog.py -e skia
 fi
 unset log
 

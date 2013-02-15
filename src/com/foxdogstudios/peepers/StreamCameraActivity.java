@@ -1,5 +1,10 @@
 package com.foxdogstudios.peepers;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Collections;
+import java.util.List;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -9,6 +14,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.TextView;
+
+import org.apache.http.conn.util.InetAddressUtils;
 
 public final class StreamCameraActivity extends Activity implements SurfaceHolder.Callback
 {
@@ -18,6 +26,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     private boolean mRunning = false;
     private SurfaceHolder mPreviewDisplay = null;
     private CameraStreamer mCameraStreamer = null;
+    private TextView mIpAddress = null;
     private Preferences mPrefs = null;
     private MenuItem mSettingsMenuItem = null;
 
@@ -37,6 +46,9 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         mPreviewDisplay = ((SurfaceView) findViewById(R.id.camera)).getHolder();
         mPreviewDisplay.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         mPreviewDisplay.addCallback(this);
+
+        mIpAddress = (TextView) findViewById(R.id.ip_address);
+        mIpAddress.setText(tryGetIpAddress());
     } // onCreate(Bundle)
 
     @Override
@@ -138,6 +150,47 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
 
 
     } // class LoadPreferencesTask
+
+    /**
+     *  Try to get the IP address of this device. Base on code from
+     *  http://stackoverflow.com/a/13007325
+     *
+     *  @return the first IP address of the device, or null
+     */
+    private static String tryGetIpAddress()
+    {
+        try
+        {
+            final List<NetworkInterface> interfaces =
+                    Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (final NetworkInterface intf : interfaces)
+            {
+                final List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (final InetAddress addr : addrs)
+                {
+                    if (!addr.isLoopbackAddress())
+                    {
+                        final String sAddr = addr.getHostAddress().toUpperCase();
+                        if (InetAddressUtils.isIPv4Address(sAddr))
+                        {
+                            return sAddr;
+                        } // if
+                        else
+                        {
+                            // Drop IP6 port suffix
+                            final int delim = sAddr.indexOf('%');
+                            return delim < 0 ? sAddr : sAddr.substring(0, delim);
+                        } // else
+                    } // if
+                } // for
+            } // for
+        } // try
+        catch (final Exception e)
+        {
+            // Ignore
+        } // for now eat exceptions
+        return null;
+    } // tryGetIpAddress()
 
 
 } // class StreamCameraActivity

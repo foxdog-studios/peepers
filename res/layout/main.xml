@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
-    <SurfaceView android:id="@+id/camera"
-                 android:layout_width="match_parent"
-                 android:layout_height="match_parent"/>
-</LinearLayout>
+<merge xmlns:android="http://schemas.android.com/apk/res/android" >
+    <SurfaceView
+        android:id="@+id/camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <TextView
+        android:id="@+id/ip_address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|top"
+        android:background="@android:color/black" />
+</merge>
 
