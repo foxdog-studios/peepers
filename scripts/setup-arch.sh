@@ -6,7 +6,7 @@ set -o nounset
 install_aur=false
 
 usage='
-    Install dependencies and set up enviroment
+    Install dependencies and set up environment
 
     Usage:
 
@@ -29,13 +29,6 @@ unset opt usage
 sudo pacman --needed --noconfirm -Sy \
         apache-ant \
         git \
-        kdebase-konsole \
-        python2 \
-        vlc
-
-# XXX: VLC hard crashes if this isn't done. This can probably be
-# removed in the future when the vlc package is fixed.
-sudo /usr/lib/vlc/vlc-cache-gen -f usr/lib/vlc/plugins
 
 if $install_aur; then
     yaourt --needed --noconfirm -Sy \
@@ -50,14 +43,6 @@ if $install_aur; then
     sudo gpasswd -a "$(whoami)" adbusers
 fi
 unset install_aur
-
-# Install bashir
-if ! which bashir &> /dev/null ; then
-    cd /tmp
-    git clone gitolite@foxdogstudios.com:bashir
-    bashir/scripts/install.sh
-    rm -fr bashir
-fi
 
 echo '
 Manual steps:

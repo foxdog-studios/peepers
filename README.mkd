@@ -1,0 +1,80 @@
+Peepers
+=======
+
+Peepers is simple IP camera application for Android. Images from the device's
+camera are streamed to a client using
+[Motion JPEG](http://en.wikipedia.org/wiki/Motion_JPEG) over HTTP. Peepers is
+designed to be educational and, as such, does not have many features and is not
+hugely useful. Feel free to add some.
+
+Setup
+-----
+
+You'll need to
+[setup the Android SDK](http://developer.android.com/sdk/installing/index.html)
+and configured your system for Android development. If you're using Arch Linux,
+you can run
+
+    # $REPO/scripts/setup-arch.sh
+
+to install the required packages and configure your system. Read and understand
+the script before running it: it's quiet invasive.
+
+Build
+-----
+
+To build and install Peepers, run
+
+    # $REPO/scripts/build.sh -bi
+
+Run ``build.sh`` with ``-h`` for more information. Alternatively, you can
+convert Peepers into an Android Eclipse project.
+
+Usage
+-----
+
+Start Peepers on an Android device that is connected a network. Peepers will
+show the device's IP address in the top-left of the screen. Open a web browser
+and navigate to
+
+    http://xxx.xxx.xxx.xxx:8080/
+
+where ``xxx.xxx.xxx.xxx`` is the IP address displayed by Peepers.
+
+Notes
+-----
+
+* You can change the port and JPEG quality from the settings screen.
+
+* The port must be between 1024 and 65535.
+
+* The JPEG quality must be between 0 and 100.
+
+* While streaming, Peepers logs the average frames per second over the last
+  fifty frames.
+
+Acknowledgements and licenses
+-----------------------------
+
+Peepers was developed with the assistant of many sources. We've listed as many
+as we can remember.
+
+* Early versions of Peepers where based on
+  [Simon Guigui](http://majorkernelpanic.net/)'s
+  [Spydroid](https://code.google.com/p/spydroid-ipcamera/) under the
+  [GNU General Public License v3.0](http://www.gnu.org/licenses/gpl.html).
+
+* The code that captures images from a webcam is base on StackOverflow
+  [answer](http://stackoverflow.com/a/9046345) from
+  [gt_ebuddy](http://stackoverflow.com/users/607637/gt-ebuddy).
+
+* The code that implements Motion JPEG over HTTP is base a StackOverflow
+  [answer](http://stackoverflow.com/a/14835393) by
+  [Managarm](http://stackoverflow.com/users/2061551/managarm).
+
+* Launcher icon: ``emotes/face_monkey.png`` from
+  [deviantdark](http://deviantdark.deviantart.com/)'s
+  [Oxygen-Refit](http://deviantdark.deviantart.com/art/Oxygen-Refit-7019975)
+  icon pack under the
+  [GNU Lesser General Public License v3.0](http://www.gnu.org/copyleft/lesser.html).
+

@@ -1,4 +1,4 @@
-#!/usr/bin/bashir
+#!/bin/bash
 
 set -o errexit
 set -o nounset
@@ -6,19 +6,16 @@ set -o nounset
 function usage
 {
     echo '
-    Build, install and/or run Peepers
+    Uninstall, clean, build, and/or install Peepers
 
     Usage:
 
-        # build.sh [-bcilouv]
+        # build.sh [-bciu]
 
     -b  build
     -c  clean
     -i  install
-    -l  launch
-    -o  log
     -u  uninstall
-    -v  video
 '
     exit 1
 }
@@ -30,26 +27,28 @@ fi
 build=false
 clean=false
 install=false
-launch=false
-log=false
 uninstall=false
-video=false
 
-while getopts :bcilouv opt; do
+while getopts :bciu opt; do
     case "${opt}" in
         b) build=true ;;
         c) clean=true ;;
         i) install=true ;;
-        l) launch=true ;;
-        o) log=true ;;
         u) uninstall=true ;;
-        v) video=true ;;
         \?|*) usage ;;
     esac
 done
 unset opt usage
 
-cd ..
+readonly REPO="$(
+    realpath -- "$(
+        dirname -- "$(
+            realpath -- "${BASH_SOURCE[0]}"
+        )"
+    )/.."
+)"
+
+cd -- "${REPO}"
 
 if $uninstall; then
     adb uninstall com.foxdogstudios.peepers
@@ -70,21 +69,4 @@ if $install; then
     ant installd
 fi
 unset install
-
-if $launch; then
-    al.py
-fi
-unset launch
-
-if $video; then
-    konsole -e ./scripts/video.sh &> /dev/null &
-fi
-unset video
-
-if $log; then
-    logdog.py -e skia
-fi
-unset log
-
-wait
 
