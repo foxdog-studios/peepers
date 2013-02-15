@@ -26,6 +26,7 @@ import android.view.SurfaceHolder;
     private static final long OPEN_CAMERA_POLL_INTERVAL_MS = 1000L;
 
     private final Object mLock = new Object();
+    private final MovingAverage mAverageSpf = new MovingAverage(50 /* numValues */);
 
     private final int mPort;
     private final int mJpegQuality;
@@ -43,9 +44,7 @@ import android.view.SurfaceHolder;
     private MemoryOutputStream mJpegOutputStream = null;
     private MJpegHttpStreamer mMJpegHttpStreamer = null;
 
-    // Frame rate data
     private long mNumFrames = 0L;
-    private long mDuration = 0L;
     private long mLastTimestamp = Long.MIN_VALUE;
 
     /* package */ CameraStreamer(final int port, final int jpegQuality,
@@ -241,20 +240,22 @@ import android.view.SurfaceHolder;
 
    private void sendPreviewFrame(final byte[] data, final Camera camera, final long timestamp)
    {
-        // Calculate and log the number of preview fames frames per
-        // second
-        mNumFrames++;
+        // Calcalute the timestamp
         final long MILLI_PER_SECOND = 1000L;
         final long timestampSeconds = timestamp / MILLI_PER_SECOND;
+
+        // Update and log the frame rate
         final long LOGS_PER_FRAME = 10L;
+        mNumFrames++;
         if (mLastTimestamp != Long.MIN_VALUE)
         {
-            mDuration += timestampSeconds- mLastTimestamp;
+            mAverageSpf.update(timestampSeconds - mLastTimestamp);
             if (mNumFrames % LOGS_PER_FRAME == LOGS_PER_FRAME - 1)
             {
-                Log.d(TAG, "FPS: " + (mNumFrames / (double)mDuration));
+                Log.d(TAG, "FPS: " + 1.0 / mAverageSpf.getAverage());
             } // if
         } // else
+
         mLastTimestamp = timestampSeconds;
 
         // Create JPEG

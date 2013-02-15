@@ -49,7 +49,7 @@ import android.util.Log;
         mPort = port;
         mBufferA = new byte[bufferSize];
         mBufferB = new byte[bufferSize];
-    } // constructor(int)
+    } // constructor(int, int)
 
     /* package */ void start()
     {
@@ -79,7 +79,7 @@ import android.util.Log;
 
         mRunning = false;
         mWorker.interrupt();
-    } // cancel()
+    } // stop()
 
     /* package */ void streamJpeg(final byte[] jpeg, final int length, final long timestamp)
     {
@@ -141,7 +141,7 @@ import android.util.Log;
                     if (!mRunning)
                     {
                         return;
-                    }
+                    } // if
                 } // catch
             } while (socket == null);
 
