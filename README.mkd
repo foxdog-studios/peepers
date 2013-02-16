@@ -4,8 +4,11 @@ Peepers
 Peepers is simple IP camera application for Android. Images from the device's
 camera are streamed to a client using
 [Motion JPEG](http://en.wikipedia.org/wiki/Motion_JPEG) over HTTP. Peepers is
-designed to be educational and, as such, does not have many features and is not
-hugely useful. Feel free to add some.
+designed to be educational and, as such, does not have many features. Feel free to add
+some.
+
+Peepers is licensed under the Apache License, Version 2.0. See
+``$REPO/LICENSE.txt`` for more information.
 
 Setup
 -----
@@ -56,8 +59,8 @@ Notes
 Acknowledgements and licenses
 -----------------------------
 
-Peepers was developed with the assistant of many sources. We've listed as many
-as we can remember.
+Peepers was developed with reference to (but not derived from) many sources.
+We've listed as many as we can remember.
 
 * Early versions of Peepers where based on
   [Simon Guigui](http://majorkernelpanic.net/)'s
