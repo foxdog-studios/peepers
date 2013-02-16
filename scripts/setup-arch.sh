@@ -43,6 +43,7 @@ unset opt usage
 sudo pacman --needed --noconfirm -Sy \
         apache-ant \
         chromium \
+        gimp \
         git \
         vlc \
 
