@@ -1,7 +1,7 @@
-<html id="html" lang=en>
+<html id="html" lang="en">
   <head>
-    <meta charset=utf-8>
-    <title>peepers MJPEG over HTTP client full screen</title>
+    <meta charset="utf-8">
+    <title>A fullscreen Peepers client</title>
     <style type="text/css">
     html {
       background: no-repeat center center fixed;
@@ -14,13 +14,13 @@
   </head>
   <body>
     <div class="control">
-      <label for="imgSource">Enter your peepers url: </label><input id="imgSource" name="imgSource" type="text" value="http://"/>
+      <label for="imgSource">Peepers URL </label>
+      <input id="imgSource" name="imgSource" type="text" value="http://"/>
       <button onclick="updateImageSource(this, event)">Start</button>
+      <p>Press <code>Esc</code> to toggle controls.</p>
       <p>
-        Press "Esc" to hide/show controls
-      </p>
-      <p>
-        See <a href="minimal.html#instructions">instructions</a> if you are having problems.
+        See <a href="minimal.html#instructions">instructions</a> if you're
+        having problems.
       </p>
     </div>
     <script>
@@ -54,3 +54,4 @@
     </script>
   </body>
 </html>
+
