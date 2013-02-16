@@ -1,30 +1,27 @@
 Peepers
 =======
 
-Peepers is simple IP camera application for Android. Images from the device's
-camera are streamed to a client using
-[Motion JPEG](http://en.wikipedia.org/wiki/Motion_JPEG) over HTTP. Peepers is
-designed to be educational and, as such, does not have many features. Feel free to add
-some.
-
-Peepers is licensed under the Apache License, Version 2.0. See
+Peepers is a simple IP camera application for Android 2.3.3. Images from the
+device's camera are streamed to a client using [Motion
+JPEG](http://en.wikipedia.org/wiki/Motion_JPEG) over HTTP. Peepers is designed
+to be educational and, as such, does not have many features (feel free to add
+some). Peepers is licensed under the Apache License, Version 2.0. See
 ``$REPO/LICENSE.txt`` for more information.
 
 Setup
 -----
 
-You'll need to
-[setup the Android SDK](http://developer.android.com/sdk/installing/index.html)
-and configured your system for Android development. If you're using Arch Linux,
-you can run
+You'll need to [setup the Android
+SDK](http://developer.android.com/sdk/installing/index.html) and configure your
+system for Android development. If you're using Arch Linux, you can run
 
     # $REPO/scripts/setup-arch.sh
 
 to install the required packages and configure your system. Read and understand
-the script before running it: it's quiet invasive.
+this script before running it: it's quite invasive.
 
-Build
------
+Build and install
+-----------------
 
 To build and install Peepers, run
 
@@ -36,35 +33,33 @@ convert Peepers into an Android Eclipse project.
 Usage
 -----
 
-Start Peepers on an Android device that is connected a network. Peepers will
-show the device's IP address ``http://xxx.xxx.xxx.xxx:yyyy`` in the top-left of
-the screen.
+Start Peepers on an Android device that is connected to a network. Peepers will
+show the device's URL in the top-left of the screen. Then view the stream using
+one of the methods below.
 
 ### Client test page
 
-In a web browser open the client page
+Open the client test page with a web browser.
 
-    $ $BROWSER ./client/index.html
+    # $BROWSER $REPO/client/index.html
 
-And enter into the text box the device's IP address.
+and enter the device's URL into the text box.
 
-So far this has proved to have the best results.
-
-All this page does is change the ``src`` of an ``img`` tag, to include a feed in
-your own pages all you just need
+So far, this has proven to be the most reliable way to view the stream. To
+include the stream in your own page, just add
 
     <img src="http://xxx.xxx.xxx.xxx:yyyy/"/>
 
 ### VLC
 
-VLC will allow you to, among other things, record the stream
+VLC will allow you to, among other things, record the stream.
 
-    $ vlc http://xxx.xxx.xxx.xxx:yyyy/"
+    # vlc http://xxx.xxx.xxx.xxx:yyyy/
 
-### Direct to browser approach
+### Direct to browser
 
-This is the dirtiest method and has been tested to work on Chromium Version
-24.0.1312.70, but it is a bit laggy.
+This is the dirtiest method. This has been tested on Chromium Version
+24.0.1312.70, but it's a bit laggy.
 
 Open a web browser and navigate to
 
@@ -93,15 +88,15 @@ We've listed as many as we can remember.
   [Spydroid](https://code.google.com/p/spydroid-ipcamera/) under the
   [GNU General Public License v3.0](http://www.gnu.org/licenses/gpl.html).
 
-* The code that captures images from a webcam is base on StackOverflow
+* The code that captures images from a webcam is base on a StackOverflow
   [answer](http://stackoverflow.com/a/9046345) from
   [gt_ebuddy](http://stackoverflow.com/users/607637/gt-ebuddy).
 
-* The code that implements Motion JPEG over HTTP is base a StackOverflow
+* The code that implements Motion JPEG over HTTP is base on a StackOverflow
   [answer](http://stackoverflow.com/a/14835393) by
   [Managarm](http://stackoverflow.com/users/2061551/managarm).
 
-* Launcher icon: ``emotes/face_monkey.png`` from
+* The launcher icon is ``emotes/face_monkey.png`` from
   [deviantdark](http://deviantdark.deviantart.com/)'s
   [Oxygen-Refit](http://deviantdark.deviantart.com/art/Oxygen-Refit-7019975)
   icon pack under the

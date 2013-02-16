@@ -42,7 +42,9 @@ unset opt usage
 
 sudo pacman --needed --noconfirm -Sy \
         apache-ant \
+        chromium \
         git \
+        vlc \
 
 if $install_aur; then
     yaourt --needed --noconfirm -Sy \
