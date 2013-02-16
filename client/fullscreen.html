@@ -1,0 +1,56 @@
+<html id="html" lang=en>
+  <head>
+    <meta charset=utf-8>
+    <title>peepers MJPEG over HTTP client full screen</title>
+    <style type="text/css">
+    html {
+      background: no-repeat center center fixed;
+      -webkit-background-size: cover;
+      -moz-background-size: cover;
+      -o-background-size: cover;
+      background-size: cover;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="control">
+      <label for="imgSource">Enter your peepers url: </label><input id="imgSource" name="imgSource" type="text" value="http://"/>
+      <button onclick="updateImageSource(this, event)">Start</button>
+      <p>
+        Press "Esc" to hide/show controls
+      </p>
+      <p>
+        See <a href="index.html#instructions">instructions</a> if you are having problems.
+      </p>
+    </div>
+    <script>
+      function updateImageSource(startButton, event) {
+        var src = document.getElementById('imgSource');
+        var html = document.getElementById('html');
+        var url = "url('" + src.value + "')";
+        html.style['backgroundImage'] = url;
+      };
+
+      function toggleControls() {
+        var i;
+        var controls = document.getElementsByClassName('control');
+        for (i = 0; i < controls.length; i ++) {
+          var control = controls[i];
+          if (control.style.display === 'none') {
+            control.style.display = '';
+          }
+          else {
+            control.style.display = 'none';
+          }
+        } // for
+      };
+
+      document.onkeydown = function(evt) {
+        evt = evt || window.event;
+        if (evt.keyCode == 27) {
+          toggleControls();
+        }
+      };
+    </script>
+  </body>
+</html>

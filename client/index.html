@@ -17,7 +17,7 @@
         &lt;img src="http://what-ever-your-peepers-url-is/"&gt;
       </code>
     </blockquote>
-    <h2>Instructions</h2>
+    <h2 id="instructions">Instructions</h2>
     <ol>
       <li>
         You will need to be on the same network as Peepers, e.g., your home wifi.
@@ -31,6 +31,9 @@
     </p>
     <label for="imgSource">Enter your peepers url: </label><input id="imgSource" name="imgSource" type="text" value="http://"/>
     <button onclick="updateImageSource(this, event)">Start</button>
+    <p>
+      If this works you may be interested in going <a href="fullscreen.html">full screen</a>.
+    </p>
     <img id="mjpegImage" name="mjpegImage" src="" style="display: block;"/>
     <script>
       function updateImageSource(imgTextInput, event) {
