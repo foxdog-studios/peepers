@@ -41,7 +41,7 @@ one of the methods below.
 
 Open the client test page with a web browser.
 
-    # $BROWSER $REPO/client/index.html
+    # $BROWSER $REPO/client/minimal.html
 
 and enter the device's URL into the text box.
 

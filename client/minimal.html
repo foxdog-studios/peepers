@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>A minimal Peepers client</title>
+  </head>
+  <body>
+    <h1>A minimal Peepers client</h1>
+    <p>
+      This is a minimal Peepers client (i.e., a MJPEG over HTTP client). It
+      boils down to an image element in the form
+    </p>
+    <blockquote>
+      <code>
+        &lt;img src="<em>Peeper's URL</em>"/&gt;
+      </code>
+    </blockquote>
+    <h2 id="instructions">Instructions</h2>
+    <p>
+      This browser and the device running Peepers must be on the same network,
+      e.g., your home wifi.
+    </p>
+    <ol>
+      <li>Start Peepers</li>
+      <li>Enter Peeper's URL into the text box below</li>
+      <li>Press the <code>Start</code> button</li>
+    </ol>
+    <p>
+      Tested on Chromium Version 24.0.1312.70 (181759) and Firefox 18.0.2.
+    </p>
+    <label for="imgSource">Peepers URL </label>
+    <input id="imgSource" name="imgSource" type="text" value="http://"/>
+    <button onclick="updateImageSource(this, event)">Start</button>
+    <p>
+      If this works you may be interested in going <a href="fullscreen.html">full screen</a>.
+    </p>
+    <img id="mjpegImage" name="mjpegImage" src="" style="display: block;"/>
+    <script>
+      function updateImageSource(imgTextInput, event) {
+        var src = document.getElementById('imgSource');
+        var img = document.getElementById('mjpegImage');
+        img.src = src.value;
+      };
+    </script>
+  </body>
+</html>
+
