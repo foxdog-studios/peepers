@@ -213,6 +213,10 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         {
             return defValue;
         } // catch
+        catch (final NumberFormatException e)
+        {
+            return defValue;
+        } // catch
     } // getPrefInt(String, int)
 
     private final void updatePrefCacheAndUi()
