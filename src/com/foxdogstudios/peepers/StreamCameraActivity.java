@@ -78,7 +78,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
 
         mIpAddress = tryGetIpAddress();
         mIpAddressView = (TextView) findViewById(R.id.ip_address);
-        updatePrefCache();
+        updatePrefCacheAndUi();
     } // onCreate(Bundle)
 
     @Override
@@ -90,7 +90,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         {
             mPrefs.registerOnSharedPreferenceChangeListener(mSharedPreferenceListener);
         } // if
-        updatePrefCache();
+        updatePrefCacheAndUi();
         tryStartCameraStreamer();
     } // onResume()
 
@@ -183,7 +183,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         {
             StreamCameraActivity.this.mPrefs = prefs;
             prefs.registerOnSharedPreferenceChangeListener(mSharedPreferenceListener);
-            updatePrefCache();
+            updatePrefCacheAndUi();
             tryStartCameraStreamer();
         } // onPostExecute(Void)
 
@@ -196,7 +196,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         @Override
         public void onSharedPreferenceChanged(final SharedPreferences prefs, final String key)
         {
-            updatePrefCache();
+            updatePrefCacheAndUi();
         } // onSharedPreferenceChanged(SharedPreferences, String)
 
     }; // mSharedPreferencesListener
@@ -215,7 +215,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         } // catch
     } // getPrefInt(String, int)
 
-    private final void updatePrefCache()
+    private final void updatePrefCacheAndUi()
     {
         // XXX: This validation should really be in the preferences activity.
         mPort = getPrefInt(PREF_PORT, PREF_PORT_DEF);
@@ -238,8 +238,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         {
             mJpegQuality = 100;
         } // else if
-        mIpAddressView.setText(mIpAddress + ":" + mPort);
-    } // updatePrefCache()
+        mIpAddressView.setText("http//:" + mIpAddress + ":" + mPort + "/");
+    } // updatePrefCacheAndUi()
 
     /**
      *  Try to get the IP address of this device. Base on code from

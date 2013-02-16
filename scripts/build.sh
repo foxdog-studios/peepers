@@ -34,7 +34,7 @@ function usage
     exit 1
 }
 
-if [[ $# -eq 0 ]]; then
+if [[ "${#}" == 0 ]]; then
     usage
 fi
 
