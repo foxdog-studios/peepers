@@ -34,12 +34,38 @@ Usage
 -----
 
 Start Peepers on an Android device that is connected a network. Peepers will
-show the device's IP address in the top-left of the screen. Open a web browser
-and navigate to
+show the device's IP address ``http://xxx.xxx.xxx.xxx:yyyy`` in the top-left of
+the screen.
 
-    http://xxx.xxx.xxx.xxx:8080/
+### Client test page
 
-where ``xxx.xxx.xxx.xxx`` is the IP address displayed by Peepers.
+In a web browser open the client page
+
+    $ $BROWSER ./client/index.html
+
+And enter into the text box the device's IP address.
+
+So far this has proved to have the best results.
+
+All this page does is change the ``src`` of an ``img`` tag, to include a feed in
+your own pages all you just need
+
+    <img src="http://xxx.xxx.xxx.xxx:yyyy/"/>
+
+### VLC
+
+VLC will allow you to, among other things, record the stream
+
+    $ vlc http://xxx.xxx.xxx.xxx:yyyy/"
+
+### Direct to browser approach
+
+This is the dirtiest method and has been tested to work on Chromium Version
+24.0.1312.70, but it is a bit laggy.
+
+Open a web browser and navigate to
+
+    http://xxx.xxx.xxx.xxx:yyyy/
 
 Notes
 -----
