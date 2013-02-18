@@ -21,8 +21,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-import android.util.Log;
-
 /* package */ final class MJpegHttpStreamer
 {
     private static final String TAG = MJpegHttpStreamer.class.getSimpleName();
@@ -58,7 +56,7 @@ import android.util.Log;
     private Thread mWorker = null;
     private volatile boolean mRunning = false;
 
-    /* package */ MJpegHttpStreamer(final int port, final int bufferSize) throws IOException
+    /* package */ MJpegHttpStreamer(final int port, final int bufferSize)
     {
         super();
         mPort = port;
@@ -127,9 +125,9 @@ import android.util.Log;
             {
                 acceptAndStream();
             } // try
-            catch (final IOException e)
+            catch (final IOException exceptionWhileStreaming)
             {
-                Log.d(TAG, "An exception occured while streaming", e);
+                System.err.println(exceptionWhileStreaming);
             } // catch
         } // while
     } // mainLoop()
@@ -224,10 +222,9 @@ import android.util.Log;
                 {
                     stream.close();
                 } // try
-                catch (final IOException e)
+                catch (final IOException closingStream)
                 {
-                    // Ingore
-                    Log.v(TAG, "Exception while closing stream", e);
+                    System.err.println(closingStream);
                 } // catch
             } //
             if (socket != null)
@@ -236,9 +233,9 @@ import android.util.Log;
                 {
                     socket.close();
                 } // try
-                catch (final IOException e)
+                catch (final IOException closingSocket)
                 {
-                    Log.v(TAG, "Exception while closing socket", e);
+                    System.err.println(closingSocket);
                 } // catch
             } // socket
             if (serverSocket != null)
@@ -247,9 +244,9 @@ import android.util.Log;
                 {
                     serverSocket.close();
                 } // try
-                catch (final IOException e)
+                catch (final IOException closingServerSocket)
                 {
-                    Log.v(TAG, "Exception while closing server socket", e);
+                    System.err.println(closingServerSocket);
                 } // catch
             } // if
         } // finally

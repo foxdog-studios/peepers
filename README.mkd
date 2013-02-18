@@ -15,7 +15,7 @@ You'll need to [setup the Android
 SDK](http://developer.android.com/sdk/installing/index.html) and configure your
 system for Android development. If you're using Arch Linux, you can run
 
-    # $REPO/scripts/setup-arch.sh
+    # $REPO/scripts/setup-arch.sh -a
 
 to install the required packages and configure your system. Read and understand
 this script before running it: it's quite invasive.
@@ -77,8 +77,24 @@ Notes
 * While streaming, Peepers logs the average frames per second over the last
   fifty frames.
 
-Acknowledgements and licenses
------------------------------
+Webcam streamer
+---------------
+
+Webcam streamer (in ``$REPO/tools/webcam-streamer``) is a pure Java (i.e.,
+it doesn't depend on the Android SDK) implementation of Motion JPEG of HTTP. It
+uses a webcam as it's source. Both the Android application and this tool
+share the same ``MJpegHttpStreamer.java`` file. So, you can change and test the
+underlying streaming code without having to worry about Android.
+
+To run the tool, ``cd`` into the ``webcam-streamer`` directory and run
+
+    # ant run
+
+While the tool is running, the stream should be available at
+``http://localhost:8080/``.
+
+Acknowledgements
+----------------
 
 Peepers was developed with reference to (but not derived from) many sources.
 We've listed as many as we can remember.

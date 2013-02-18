@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<project>
+    <property name="src.dir" location="src" />
+    <property name="build.dir" location="build" />
+    <property name="class.dir" location="${build.dir}/classes" />
+    <property name="jar.dir" location="${build.dir}/jar" />
+    <property name="javacv.dir" location="/usr/share/java/javacv"/>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${class.dir}"/>
+        <javac
+            includeantruntime="false"
+            srcdir="../../src"
+            destdir="${class.dir}"
+            includes="com/foxdogstudios/peepers/MJpegHttpStreamer.java"/>
+        <javac
+            includeantruntime="false"
+            srcdir="${src.dir}"
+            destdir="${class.dir}">
+            <classpath>
+               <fileset dir="${javacv.dir}">
+                  <include name="**/*.jar" />
+               </fileset>
+             </classpath>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/WebcamStreamer.jar" basedir="${class.dir}">
+            <manifest>
+                <attribute
+                    name="Main-Class"
+                    value="com.foxdogstudios.peepers.WebcamStreamer"/>
+            </manifest>
+            <zipgroupfileset dir="${javacv.dir}" includes="**/*.jar"/>
+        </jar>
+    </target>
+
+    <target name="run" depends="jar">
+        <java jar="build/jar/WebcamStreamer.jar" fork="true"/>
+    </target>
+</project>
+
