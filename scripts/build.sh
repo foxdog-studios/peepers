@@ -80,7 +80,11 @@ fi
 unset build
 
 if $install; then
-    ant installd
+    stdout="$(mktemp)"
+    ant installd | tee "${stdout}"
+    grep -q Success "${stdout}"
+    rm -f $stdout
+    unset stdout
 fi
 unset install
 
