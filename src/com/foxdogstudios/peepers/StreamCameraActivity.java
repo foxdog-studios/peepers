@@ -24,6 +24,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -40,6 +41,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
 {
     private static final String TAG = StreamCameraActivity.class.getSimpleName();
 
+    private static final String PREF_FLASH_LIGHT = "flash_light";
+    private static final boolean PREF_FLASH_LIGHT_DEF = false;
     private static final String PREF_PORT = "port";
     private static final int PREF_PORT_DEF = 8080;
     private static final String PREF_JPEG_QUALITY = "jpeg_quality";
@@ -51,6 +54,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     private CameraStreamer mCameraStreamer = null;
 
     private String mIpAddress = "";
+    private boolean mUseFlashLight = PREF_FLASH_LIGHT_DEF;
     private int mPort = PREF_PORT_DEF;
     private int mJpegQuality = PREF_JPEG_QUALITY_DEF;
     private TextView mIpAddressView = null;
@@ -131,7 +135,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     {
         if (mRunning && mPreviewDisplayCreated && mPrefs != null)
         {
-            mCameraStreamer = new CameraStreamer(mPort, mJpegQuality, mPreviewDisplay);
+            mCameraStreamer = new CameraStreamer(mUseFlashLight, mPort, mJpegQuality,
+                    mPreviewDisplay);
             mCameraStreamer.start();
         } // if
     } // tryStartCameraStreamer()
@@ -221,6 +226,22 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
 
     private final void updatePrefCacheAndUi()
     {
+        if (hasFlashLight())
+        {
+            if (mPrefs != null)
+            {
+                mUseFlashLight = mPrefs.getBoolean(PREF_FLASH_LIGHT, PREF_FLASH_LIGHT_DEF);
+            } // if
+            else
+            {
+                mUseFlashLight = PREF_FLASH_LIGHT_DEF;
+            } // else
+        } //if
+        else
+        {
+            mUseFlashLight = false;
+        } // else
+
         // XXX: This validation should really be in the preferences activity.
         mPort = getPrefInt(PREF_PORT, PREF_PORT_DEF);
         // The port must be in the range [1024 65535]
@@ -242,8 +263,13 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         {
             mJpegQuality = 100;
         } // else if
-        mIpAddressView.setText("http//:" + mIpAddress + ":" + mPort + "/");
+        mIpAddressView.setText("http://" + mIpAddress + ":" + mPort + "/");
     } // updatePrefCacheAndUi()
+
+    private boolean hasFlashLight()
+    {
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
+    } // hasFlashLight()
 
     /**
      *  Try to get the IP address of this device. Base on code from

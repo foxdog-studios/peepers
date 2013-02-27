@@ -43,6 +43,7 @@ import android.view.SurfaceHolder;
     private final Object mLock = new Object();
     private final MovingAverage mAverageSpf = new MovingAverage(50 /* numValues */);
 
+    private final boolean mUseFlashLight;
     private final int mPort;
     private final int mJpegQuality;
     private final SurfaceHolder mPreviewDisplay;
@@ -62,8 +63,8 @@ import android.view.SurfaceHolder;
     private long mNumFrames = 0L;
     private long mLastTimestamp = Long.MIN_VALUE;
 
-    /* package */ CameraStreamer(final int port, final int jpegQuality,
-            final SurfaceHolder previewDisplay)
+    /* package */ CameraStreamer(final boolean useFlashLight, final int port,
+            final int jpegQuality, final SurfaceHolder previewDisplay)
     {
         super();
 
@@ -72,6 +73,7 @@ import android.view.SurfaceHolder;
             throw new IllegalArgumentException("previewDisplay must not be null");
         } // if
 
+        mUseFlashLight = useFlashLight;
         mPort = port;
         mJpegQuality = jpegQuality;
         mPreviewDisplay = previewDisplay;
@@ -183,6 +185,11 @@ import android.view.SurfaceHolder;
         // by another application.
         final Camera camera = Camera.open();
         final Camera.Parameters params = camera.getParameters();
+
+        if (mUseFlashLight)
+        {
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        } // if
 
         // Set Preview FPS range. The range with the greatest maximum
         // is returned first.

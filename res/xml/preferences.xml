@@ -15,13 +15,14 @@
 -->
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
-    <PreferenceCategory android:title="Destination" />
+    <CheckBoxPreference
+        android:key="flash_light"
+        android:title="Flash light" />
     <EditTextPreference
         android:key="port"
-        android:title="Port"
+        android:title="Server port"
         android:inputType="number"
         android:defaultValue="8080" />
-    <PreferenceCategory android:title="Quality" />
     <EditTextPreference
         android:key="jpeg_quality"
         android:title="JPEG quality"
