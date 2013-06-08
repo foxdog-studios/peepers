@@ -17,7 +17,9 @@ package com.foxdogstudios.peepers;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 
 import android.app.Activity;
@@ -81,6 +83,9 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         mPreviewDisplay.addCallback(this);
 
         mIpAddress = tryGetIpAddress();
+        Log.v("addr", "tryGetIpAddress:"+mIpAddress);
+        mIpAddress = getLocalIpAddress();
+        Log.v("addr", "getLocalIpAddress:"+mIpAddress);
         mIpAddressView = (TextView) findViewById(R.id.ip_address);
         updatePrefCacheAndUi();
     } // onCreate(Bundle)
@@ -311,7 +316,25 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         } // for now eat exceptions
         return null;
     } // tryGetIpAddress()
-
+    public String getLocalIpAddress() {
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    Log.v("ddr", "addr:"+inetAddress.getHostAddress());
+                    //if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress() ) {
+                    if (!inetAddress.isLoopbackAddress() && InetAddressUtils.isIPv4Address(inetAddress.getHostAddress())) {
+                        String ipAddr = inetAddress.getHostAddress();
+                        return ipAddr;
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.d(TAG, ex.toString());
+        }
+        return null;
+    }
 
 } // class StreamCameraActivity
 
