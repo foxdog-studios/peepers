@@ -185,7 +185,7 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
             prefs.registerOnSharedPreferenceChangeListener(mSharedPreferenceListener);
             updatePrefCacheAndUi();
             tryStartCameraStreamer();
-        } // onPostExecute(Void)
+        } // onPostExecute(SharedPreferences)
 
 
     } // class LoadPreferencesTask

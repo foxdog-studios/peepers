@@ -17,6 +17,7 @@ package com.foxdogstudios.peepers;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -186,10 +187,17 @@ import android.view.SurfaceHolder;
 
         // Set Preview FPS range. The range with the greatest maximum
         // is returned first.
-        final int[] range = params.getSupportedPreviewFpsRange().get(0);
-        params.setPreviewFpsRange(range[Camera.Parameters.PREVIEW_FPS_MIN_INDEX],
-                range[Camera.Parameters.PREVIEW_FPS_MAX_INDEX]);
-        camera.setParameters(params);
+        final List<int[]> supportedPreviewFpsRanges = params.getSupportedPreviewFpsRange();
+        // XXX: However sometimes it returns null. This is a known bug
+        // https://code.google.com/p/android/issues/detail?id=6271
+        // In which case, we just don't set it.
+        if (supportedPreviewFpsRanges != null)
+        {
+            final int[] range = supportedPreviewFpsRanges.get(0);
+            params.setPreviewFpsRange(range[Camera.Parameters.PREVIEW_FPS_MIN_INDEX],
+                    range[Camera.Parameters.PREVIEW_FPS_MAX_INDEX]);
+            camera.setParameters(params);
+        } // if
 
         // Set up preview callback
         mPreviewFormat = params.getPreviewFormat();
