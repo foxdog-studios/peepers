@@ -17,7 +17,6 @@ package com.foxdogstudios.peepers;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -30,6 +29,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +39,8 @@ import android.widget.TextView;
 
 import org.apache.http.conn.util.InetAddressUtils;
 
-public final class StreamCameraActivity extends Activity implements SurfaceHolder.Callback
+public final class StreamCameraActivity extends Activity
+        implements SurfaceHolder.Callback
 {
     private static final String TAG = StreamCameraActivity.class.getSimpleName();
 
@@ -83,9 +84,6 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         mPreviewDisplay.addCallback(this);
 
         mIpAddress = tryGetIpAddress();
-        Log.v("addr", "tryGetIpAddress:"+mIpAddress);
-        mIpAddress = getLocalIpAddress();
-        Log.v("addr", "getLocalIpAddress:"+mIpAddress);
         mIpAddressView = (TextView) findViewById(R.id.ip_address);
         updatePrefCacheAndUi();
     } // onCreate(Bundle)
@@ -97,7 +95,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         mRunning = true;
         if (mPrefs != null)
         {
-            mPrefs.registerOnSharedPreferenceChangeListener(mSharedPreferenceListener);
+            mPrefs.registerOnSharedPreferenceChangeListener(
+                    mSharedPreferenceListener);
         } // if
         updatePrefCacheAndUi();
         tryStartCameraStreamer();
@@ -110,14 +109,15 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         mRunning = false;
         if (mPrefs != null)
         {
-            mPrefs.unregisterOnSharedPreferenceChangeListener(mSharedPreferenceListener);
+            mPrefs.unregisterOnSharedPreferenceChangeListener(
+                    mSharedPreferenceListener);
         } // if
         ensureCameraStreamerStopped();
     } // onPause()
 
     @Override
-    public void surfaceChanged(final SurfaceHolder holder, final int format, final int width,
-            final int height)
+    public void surfaceChanged(final SurfaceHolder holder, final int format,
+            final int width, final int height)
     {
         // Ingored
     } // surfaceChanged(SurfaceHolder, int, int, int)
@@ -140,8 +140,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     {
         if (mRunning && mPreviewDisplayCreated && mPrefs != null)
         {
-            mCameraStreamer = new CameraStreamer(mUseFlashLight, mPort, mJpegQuality,
-                    mPreviewDisplay);
+            mCameraStreamer = new CameraStreamer(mUseFlashLight, mPort,
+                    mJpegQuality, mPreviewDisplay);
             mCameraStreamer.start();
         } // if
     } // tryStartCameraStreamer()
@@ -175,7 +175,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         return true;
     } // onOptionsItemSelected(MenuItem)
 
-    private final class LoadPreferencesTask extends AsyncTask<Void, Void, SharedPreferences>
+    private final class LoadPreferencesTask
+            extends AsyncTask<Void, Void, SharedPreferences>
     {
         private LoadPreferencesTask()
         {
@@ -185,14 +186,16 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         @Override
         protected SharedPreferences doInBackground(final Void... noParams)
         {
-            return PreferenceManager.getDefaultSharedPreferences(StreamCameraActivity.this);
+            return PreferenceManager.getDefaultSharedPreferences(
+                    StreamCameraActivity.this);
         } // doInBackground()
 
         @Override
         protected void onPostExecute(final SharedPreferences prefs)
         {
             StreamCameraActivity.this.mPrefs = prefs;
-            prefs.registerOnSharedPreferenceChangeListener(mSharedPreferenceListener);
+            prefs.registerOnSharedPreferenceChangeListener(
+                    mSharedPreferenceListener);
             updatePrefCacheAndUi();
             tryStartCameraStreamer();
         } // onPostExecute(Void)
@@ -204,7 +207,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
             new OnSharedPreferenceChangeListener()
     {
         @Override
-        public void onSharedPreferenceChanged(final SharedPreferences prefs, final String key)
+        public void onSharedPreferenceChanged(final SharedPreferences prefs,
+                final String key)
         {
             updatePrefCacheAndUi();
         } // onSharedPreferenceChanged(SharedPreferences, String)
@@ -235,7 +239,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         {
             if (mPrefs != null)
             {
-                mUseFlashLight = mPrefs.getBoolean(PREF_FLASH_LIGHT, PREF_FLASH_LIGHT_DEF);
+                mUseFlashLight = mPrefs.getBoolean(PREF_FLASH_LIGHT,
+                        PREF_FLASH_LIGHT_DEF);
             } // if
             else
             {
@@ -273,68 +278,38 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
 
     private boolean hasFlashLight()
     {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
+        return getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_CAMERA_FLASH);
     } // hasFlashLight()
 
-    /**
-     *  Try to get the IP address of this device. Base on code from
-     *  http://stackoverflow.com/a/13007325
-     *
-     *  @return the first IP address of the device, or null
-     */
     private static String tryGetIpAddress()
     {
         try
         {
-            final List<NetworkInterface> interfaces =
-                    Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (final NetworkInterface intf : interfaces)
+            final Enumeration<NetworkInterface> en =
+                    NetworkInterface.getNetworkInterfaces();
+            while (en.hasMoreElements())
             {
-                final List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-                for (final InetAddress addr : addrs)
+                final NetworkInterface intf = en.nextElement();
+                final Enumeration<InetAddress> enumIpAddr =
+                        intf.getInetAddresses();
+                while (enumIpAddr.hasMoreElements())
                 {
-                    if (!addr.isLoopbackAddress())
+                    final  InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress())
                     {
-                        final String sAddr = addr.getHostAddress().toUpperCase();
-                        if (InetAddressUtils.isIPv4Address(sAddr))
-                        {
-                            return sAddr;
-                        } // if
-                        else
-                        {
-                            // Drop IP6 port suffix
-                            final int delim = sAddr.indexOf('%');
-                            return delim < 0 ? sAddr : sAddr.substring(0, delim);
-                        } // else
+                        return Formatter.formatIpAddress(
+                                inetAddress.hashCode());
                     } // if
-                } // for
+                } // while
             } // for
         } // try
         catch (final Exception e)
         {
             // Ignore
-        } // for now eat exceptions
+        } // catch
         return null;
     } // tryGetIpAddress()
-    public String getLocalIpAddress() {
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    Log.v("ddr", "addr:"+inetAddress.getHostAddress());
-                    //if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress() ) {
-                    if (!inetAddress.isLoopbackAddress() && InetAddressUtils.isIPv4Address(inetAddress.getHostAddress())) {
-                        String ipAddr = inetAddress.getHostAddress();
-                        return ipAddr;
-                    }
-                }
-            }
-        } catch (SocketException ex) {
-            Log.d(TAG, ex.toString());
-        }
-        return null;
-    }
 
 } // class StreamCameraActivity
 
