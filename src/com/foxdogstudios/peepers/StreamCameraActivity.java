@@ -27,6 +27,8 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -40,6 +42,8 @@ import org.apache.http.conn.util.InetAddressUtils;
 public final class StreamCameraActivity extends Activity implements SurfaceHolder.Callback
 {
     private static final String TAG = StreamCameraActivity.class.getSimpleName();
+
+    private static final String WAKE_LOCK_TAG = "peepers";
 
     private static final String PREF_FLASH_LIGHT = "flash_light";
     private static final boolean PREF_FLASH_LIGHT_DEF = false;
@@ -60,8 +64,8 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
     private TextView mIpAddressView = null;
     private LoadPreferencesTask mLoadPreferencesTask = null;
     private SharedPreferences mPrefs = null;
-
     private MenuItem mSettingsMenuItem = null;
+    private WakeLock mWakeLock = null;
 
     public StreamCameraActivity()
     {
@@ -83,6 +87,11 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         mIpAddress = tryGetIpAddress();
         mIpAddressView = (TextView) findViewById(R.id.ip_address);
         updatePrefCacheAndUi();
+
+        final PowerManager powerManager =
+                (PowerManager) getSystemService(POWER_SERVICE);
+        mWakeLock = powerManager.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK,
+                WAKE_LOCK_TAG);
     } // onCreate(Bundle)
 
     @Override
@@ -96,11 +105,13 @@ public final class StreamCameraActivity extends Activity implements SurfaceHolde
         } // if
         updatePrefCacheAndUi();
         tryStartCameraStreamer();
+        mWakeLock.acquire();
     } // onResume()
 
     @Override
     protected void onPause()
     {
+        mWakeLock.release();
         super.onPause();
         mRunning = false;
         if (mPrefs != null)
