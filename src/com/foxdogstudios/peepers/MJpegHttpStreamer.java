@@ -37,6 +37,7 @@ import java.net.SocketTimeoutException;
         + "Cache-Control: no-store, no-cache, must-revalidate, pre-check=0, "
             + "post-check=0, max-age=0\r\n"
         + "Pragma: no-cache\r\n"
+        + "Access-Control-Allow-Origin:*\r\n"
         + "Content-Type: multipart/x-mixed-replace; "
             + "boundary=" + BOUNDARY + "\r\n"
         + BOUNDARY_LINES;
