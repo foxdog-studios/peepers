@@ -15,7 +15,13 @@
 
 package com.foxdogstudios.peepers;
 
+import java.util.List;
+
+import android.hardware.Camera;
 import android.os.Bundle;
+import android.preference.ListPreference;
+import android.preference.Preference;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 
 public final class PeepersPreferenceActivity extends PreferenceActivity
@@ -30,8 +36,41 @@ public final class PeepersPreferenceActivity extends PreferenceActivity
     {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
+        final ListPreference sizePreference = (ListPreference) findPreference("size");
+
+        setSizePreferences(sizePreference);
+
+        sizePreference.setOnPreferenceClickListener(new OnPreferenceClickListener(){
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                setSizePreferences(sizePreference);
+                return false;
+            }
+        });
     } // onCreate()
 
+    private void setSizePreferences(final ListPreference sizePreference)
+    {
+        final Camera camera = Camera.open();
+        final Camera.Parameters params = camera.getParameters();
+        camera.release();
+
+        final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
+        CharSequence[] entries = new CharSequence[supportedPreviewSizes.size()];
+        CharSequence[] entryValues = new CharSequence[supportedPreviewSizes.size()];
+        for (int previewSizeIndex = 0; previewSizeIndex < supportedPreviewSizes.size();
+             previewSizeIndex++)
+        {
+            Camera.Size supportedPreviewSize = supportedPreviewSizes.get(previewSizeIndex);
+            entries[previewSizeIndex] = supportedPreviewSize.width + "x"
+                                        + supportedPreviewSize.height;
+            entryValues[previewSizeIndex] = String.valueOf(previewSizeIndex);
+        } // for
+
+        sizePreference.setEntries(entries);
+        sizePreference.setEntryValues(entryValues);
+
+    } // setSizePreferenceData()
 
 } // class PeepersPreferenceActivity
 

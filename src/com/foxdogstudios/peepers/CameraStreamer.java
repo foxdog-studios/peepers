@@ -46,6 +46,7 @@ import android.view.SurfaceHolder;
 
     private final boolean mUseFlashLight;
     private final int mPort;
+    private final int mPreviewSizeIndex;
     private final int mJpegQuality;
     private final SurfaceHolder mPreviewDisplay;
 
@@ -65,7 +66,7 @@ import android.view.SurfaceHolder;
     private long mLastTimestamp = Long.MIN_VALUE;
 
     /* package */ CameraStreamer(final boolean useFlashLight, final int port,
-            final int jpegQuality, final SurfaceHolder previewDisplay)
+            final int previewSizeIndex, final int jpegQuality, final SurfaceHolder previewDisplay)
     {
         super();
 
@@ -76,6 +77,7 @@ import android.view.SurfaceHolder;
 
         mUseFlashLight = useFlashLight;
         mPort = port;
+        mPreviewSizeIndex = previewSizeIndex;
         mJpegQuality = jpegQuality;
         mPreviewDisplay = previewDisplay;
     } // constructor(SurfaceHolder)
@@ -186,6 +188,10 @@ import android.view.SurfaceHolder;
         // by another application.
         final Camera camera = Camera.open();
         final Camera.Parameters params = camera.getParameters();
+
+        final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
+        final Camera.Size selectedPreviewSize = supportedPreviewSizes.get(mPreviewSizeIndex);
+        params.setPreviewSize(selectedPreviewSize.width, selectedPreviewSize.height);
 
         if (mUseFlashLight)
         {

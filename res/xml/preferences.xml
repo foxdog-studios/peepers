@@ -23,6 +23,9 @@
         android:title="Server port"
         android:inputType="number"
         android:defaultValue="8080" />
+    <ListPreference
+        android:key="size"
+        android:title="JPEG size"/>
     <EditTextPreference
         android:key="jpeg_quality"
         android:title="JPEG quality"

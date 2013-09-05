@@ -52,8 +52,11 @@ public final class StreamCameraActivity extends Activity
     private static final boolean PREF_FLASH_LIGHT_DEF = false;
     private static final String PREF_PORT = "port";
     private static final int PREF_PORT_DEF = 8080;
+    private static final String PREF_JPEG_SIZE = "size";
     private static final String PREF_JPEG_QUALITY = "jpeg_quality";
     private static final int PREF_JPEG_QUALITY_DEF = 40;
+    // preview sizes will always have at least one element, so this is safe
+    private static final int PREF_PREVIEW_SIZE_INDEX_DEF = 0;
 
     private boolean mRunning = false;
     private boolean mPreviewDisplayCreated = false;
@@ -64,6 +67,7 @@ public final class StreamCameraActivity extends Activity
     private boolean mUseFlashLight = PREF_FLASH_LIGHT_DEF;
     private int mPort = PREF_PORT_DEF;
     private int mJpegQuality = PREF_JPEG_QUALITY_DEF;
+    private int mPrevieSizeIndex = PREF_PREVIEW_SIZE_INDEX_DEF;
     private TextView mIpAddressView = null;
     private LoadPreferencesTask mLoadPreferencesTask = null;
     private SharedPreferences mPrefs = null;
@@ -152,7 +156,7 @@ public final class StreamCameraActivity extends Activity
         if (mRunning && mPreviewDisplayCreated && mPrefs != null)
         {
             mCameraStreamer = new CameraStreamer(mUseFlashLight, mPort,
-                    mJpegQuality, mPreviewDisplay);
+                    mPrevieSizeIndex, mJpegQuality, mPreviewDisplay);
             mCameraStreamer.start();
         } // if
     } // tryStartCameraStreamer()
@@ -274,6 +278,8 @@ public final class StreamCameraActivity extends Activity
         {
             mPort = 65535;
         } // else if
+
+        mPrevieSizeIndex = getPrefInt(PREF_JPEG_SIZE, PREF_PREVIEW_SIZE_INDEX_DEF);
         mJpegQuality = getPrefInt(PREF_JPEG_QUALITY, PREF_JPEG_QUALITY_DEF);
         // The JPEG quality must be in the range [0 100]
         if (mJpegQuality < 0)
