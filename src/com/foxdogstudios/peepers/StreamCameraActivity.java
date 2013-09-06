@@ -94,7 +94,7 @@ public final class StreamCameraActivity extends Activity
         mPreviewDisplay.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         mPreviewDisplay.addCallback(this);
 
-        mIpAddress = tryGetIpAddress();
+        mIpAddress = tryGetIpV4Address();
         mIpAddressView = (TextView) findViewById(R.id.ip_address);
         updatePrefCacheAndUi();
 
@@ -303,7 +303,7 @@ public final class StreamCameraActivity extends Activity
                 PackageManager.FEATURE_CAMERA_FLASH);
     } // hasFlashLight()
 
-    private static String tryGetIpAddress()
+    private static String tryGetIpV4Address()
     {
         try
         {
@@ -319,8 +319,11 @@ public final class StreamCameraActivity extends Activity
                     final  InetAddress inetAddress = enumIpAddr.nextElement();
                     if (!inetAddress.isLoopbackAddress())
                     {
-                        return Formatter.formatIpAddress(
-                                inetAddress.hashCode());
+                        final String addr = inetAddress.getHostAddress().toUpperCase();
+                        if (InetAddressUtils.isIPv4Address(addr))
+                        {
+                            return addr;
+                        }
                     } // if
                 } // while
             } // for
@@ -330,7 +333,7 @@ public final class StreamCameraActivity extends Activity
             // Ignore
         } // catch
         return null;
-    } // tryGetIpAddress()
+    } // tryGetIpV4Address()
 
 } // class StreamCameraActivity
 
