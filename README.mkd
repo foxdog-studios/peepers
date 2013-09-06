@@ -112,9 +112,3 @@ We've listed as many as we can remember.
   [answer](http://stackoverflow.com/a/14835393) by
   [Managarm](http://stackoverflow.com/users/2061551/managarm).
 
-* The launcher icon is ``emotes/face_monkey.png`` from
-  [deviantdark](http://deviantdark.deviantart.com/)'s
-  [Oxygen-Refit](http://deviantdark.deviantart.com/art/Oxygen-Refit-7019975)
-  icon pack under the
-  [GNU Lesser General Public License v3.0](http://www.gnu.org/copyleft/lesser.html).
-
