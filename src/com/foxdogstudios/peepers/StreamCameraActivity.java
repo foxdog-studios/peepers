@@ -48,6 +48,8 @@ public final class StreamCameraActivity extends Activity
 
     private static final String WAKE_LOCK_TAG = "peepers";
 
+    private static final String PREF_CAMERA = "camera";
+    private static final int PREF_CAMERA_INDEX_DEF = 0;
     private static final String PREF_FLASH_LIGHT = "flash_light";
     private static final boolean PREF_FLASH_LIGHT_DEF = false;
     private static final String PREF_PORT = "port";
@@ -64,6 +66,7 @@ public final class StreamCameraActivity extends Activity
     private CameraStreamer mCameraStreamer = null;
 
     private String mIpAddress = "";
+    private int mCameraIndex = PREF_CAMERA_INDEX_DEF;
     private boolean mUseFlashLight = PREF_FLASH_LIGHT_DEF;
     private int mPort = PREF_PORT_DEF;
     private int mJpegQuality = PREF_JPEG_QUALITY_DEF;
@@ -155,7 +158,7 @@ public final class StreamCameraActivity extends Activity
     {
         if (mRunning && mPreviewDisplayCreated && mPrefs != null)
         {
-            mCameraStreamer = new CameraStreamer(mUseFlashLight, mPort,
+            mCameraStreamer = new CameraStreamer(mCameraIndex, mUseFlashLight, mPort,
                     mPrevieSizeIndex, mJpegQuality, mPreviewDisplay);
             mCameraStreamer.start();
         } // if
@@ -250,6 +253,7 @@ public final class StreamCameraActivity extends Activity
 
     private final void updatePrefCacheAndUi()
     {
+        mCameraIndex = getPrefInt(PREF_CAMERA, PREF_CAMERA_INDEX_DEF);
         if (hasFlashLight())
         {
             if (mPrefs != null)

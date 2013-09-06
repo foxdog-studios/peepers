@@ -36,22 +36,79 @@ public final class PeepersPreferenceActivity extends PreferenceActivity
     {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
+
+        // Camera preference
+        final ListPreference cameraPreference = (ListPreference) findPreference("camera");
+
+        setCameraPreferences(cameraPreference);
+
+        cameraPreference.setOnPreferenceClickListener(new OnPreferenceClickListener(){
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                setCameraPreferences(cameraPreference);
+                return false;
+            }
+        });
+
+        // JPEG size preference
         final ListPreference sizePreference = (ListPreference) findPreference("size");
 
-        setSizePreferences(sizePreference);
+        setSizePreferences(sizePreference, cameraPreference);
 
         sizePreference.setOnPreferenceClickListener(new OnPreferenceClickListener(){
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                setSizePreferences(sizePreference);
+                setSizePreferences(sizePreference, cameraPreference);
                 return false;
             }
         });
-    } // onCreate()
+    } // onCreate(Bundle)
 
-    private void setSizePreferences(final ListPreference sizePreference)
+    private void setCameraPreferences(final ListPreference cameraPreference)
     {
-        final Camera camera = Camera.open();
+        final int numberOfCameras = Camera.getNumberOfCameras();
+        final CharSequence[] entries = new CharSequence[numberOfCameras];
+        final CharSequence[] entryValues = new CharSequence[numberOfCameras];
+        final Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+        for (int cameraIndex = 0; cameraIndex < numberOfCameras; cameraIndex++)
+        {
+            Camera.getCameraInfo(cameraIndex, cameraInfo);
+            String cameraFacing;
+            switch (cameraInfo.facing)
+            {
+                case Camera.CameraInfo.CAMERA_FACING_BACK:
+                    cameraFacing = "back";
+                    break;
+                case Camera.CameraInfo.CAMERA_FACING_FRONT:
+                    cameraFacing = "front";
+                    break;
+                default:
+                    cameraFacing = "unknown";
+            } // switch
+
+            entries[cameraIndex] = "Camara " + cameraIndex + " " + cameraFacing;
+            entryValues[cameraIndex] = String.valueOf(cameraIndex);
+        } //for
+
+        cameraPreference.setEntries(entries);
+        cameraPreference.setEntryValues(entryValues);
+
+    } // setCameraPreferences(ListPreference)
+
+    private void setSizePreferences(final ListPreference sizePreference,
+                                    final ListPreference cameraPreference)
+    {
+        final String cameraPreferenceValue = cameraPreference.getValue();
+        final int cameraIndex;
+        if (cameraPreferenceValue != null)
+        {
+            cameraIndex = Integer.parseInt(cameraPreferenceValue);
+        } // if
+        else
+        {
+            cameraIndex = 0;
+        } // else
+        final Camera camera = Camera.open(cameraIndex);
         final Camera.Parameters params = camera.getParameters();
         camera.release();
 
@@ -70,7 +127,7 @@ public final class PeepersPreferenceActivity extends PreferenceActivity
         sizePreference.setEntries(entries);
         sizePreference.setEntryValues(entryValues);
 
-    } // setSizePreferenceData()
+    } // setSizePreferenceData(ListPreference)
 
 } // class PeepersPreferenceActivity
 

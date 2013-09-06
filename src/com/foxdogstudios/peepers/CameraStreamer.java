@@ -44,6 +44,7 @@ import android.view.SurfaceHolder;
     private final Object mLock = new Object();
     private final MovingAverage mAverageSpf = new MovingAverage(50 /* numValues */);
 
+    private final int mCameraIndex;
     private final boolean mUseFlashLight;
     private final int mPort;
     private final int mPreviewSizeIndex;
@@ -65,7 +66,7 @@ import android.view.SurfaceHolder;
     private long mNumFrames = 0L;
     private long mLastTimestamp = Long.MIN_VALUE;
 
-    /* package */ CameraStreamer(final boolean useFlashLight, final int port,
+    /* package */ CameraStreamer(final int cameraIndex, final boolean useFlashLight, final int port,
             final int previewSizeIndex, final int jpegQuality, final SurfaceHolder previewDisplay)
     {
         super();
@@ -75,6 +76,7 @@ import android.view.SurfaceHolder;
             throw new IllegalArgumentException("previewDisplay must not be null");
         } // if
 
+        mCameraIndex = cameraIndex;
         mUseFlashLight = useFlashLight;
         mPort = port;
         mPreviewSizeIndex = previewSizeIndex;
@@ -186,7 +188,7 @@ import android.view.SurfaceHolder;
     {
         // Throws RuntimeException if the camera is currently opened
         // by another application.
-        final Camera camera = Camera.open();
+        final Camera camera = Camera.open(mCameraIndex);
         final Camera.Parameters params = camera.getParameters();
 
         final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
