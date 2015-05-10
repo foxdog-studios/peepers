@@ -8,6 +8,8 @@ to be educational and, as such, does not have many features (feel free to add
 some). Peepers is licensed under the Apache License, Version 2.0. See
 ``$REPO/LICENSE.txt`` for more information.
 
+__[Checkout this Android Studio port](https://github.com/afathman/peepers)__ (thanks [afathman](https://github.com/afathman)).
+
 Setup
 -----
 
